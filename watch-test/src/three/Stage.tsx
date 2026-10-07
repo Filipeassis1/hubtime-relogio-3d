@@ -17,7 +17,7 @@ export function Stage({ children }: { children: ReactNode }) {
       <directionalLight position={[160, 70, -170]} intensity={1.8} color="#e3ecff" />
       <hemisphereLight args={['#eef3ff', '#cdbfae', 0.3]} />
       {children}
-      <ContactShadows position={[0, -112, -20]} scale={360} far={80} blur={2.6} opacity={0.38} color="#1b2433" resolution={1024} />
+      <ContactShadows position={[0, -41.5, -18]} scale={260} far={60} blur={2.6} opacity={0.38} color="#1b2433" resolution={1024} />
     </>
   );
 }

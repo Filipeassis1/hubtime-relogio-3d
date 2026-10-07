@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BAND, R, Z } from '../data/watchParams';
+import { BAND } from '../data/watchParams';
 
 /** Revolve a [radius, z] profile around the Z axis. */
 export function lathe(profile: [number, number][], segments = 128): THREE.BufferGeometry {
@@ -22,11 +22,23 @@ export function cylinderX(r: number, x0: number, x1: number, segments = 32): THR
   return g;
 }
 
-/** Point and tilt (rotation about X) of the bracelet path; sign 1 = 12h side, −1 = 6h side. */
+/** φ on the wrist ellipse for arc length s (binary search in the precomputed table). */
+function phiAt(s: number): number {
+  const t = BAND.arc;
+  if (s <= 0) return t[0][1];
+  if (s >= BAND.halfLength) return t[t.length - 1][1];
+  let lo = 0, hi = t.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (t[mid][0] < s) lo = mid; else hi = mid; }
+  const f = (s - t[lo][0]) / (t[hi][0] - t[lo][0]);
+  return t[lo][1] + (t[hi][1] - t[lo][1]) * f;
+}
+
+/** Point and tilt (rotation about X) on the closed bracelet; s from the lug end, sign 1 = 12h side, −1 = 6h side. */
 export function bandFrame(s: number, sign: 1 | -1): { pos: THREE.Vector3; angle: number } {
-  const ty = sign, tz = 0 - 2 * BAND.k * s; // "0 −" keeps +0 at s = 0, so atan2 gives π (not −π) on the 6h side
+  const phi = phiAt(s);
+  const ty = sign * BAND.a * Math.cos(phi), tz = -BAND.b * Math.sin(phi);
   return {
-    pos: new THREE.Vector3(0, sign * (R.lugEndY + s), Z.lugCenter - BAND.k * s * s),
+    pos: new THREE.Vector3(0, sign * BAND.a * Math.sin(phi), BAND.centerZ + BAND.b * Math.cos(phi)),
     angle: Math.atan2(tz, ty),
   };
 }

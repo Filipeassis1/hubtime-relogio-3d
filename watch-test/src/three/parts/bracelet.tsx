@@ -12,10 +12,10 @@ type Sign = 1 | -1;
 const SIDES: Sign[] = [1, -1];
 const links = (sign: Sign) => (sign === 1 ? BAND.linksTop : BAND.linksBottom);
 const linkS = (i: number) => BAND.endLink + i * BAND.pitch + BAND.pitch / 2;
-const CLASP_S = BAND.endLink + BAND.linksBottom * BAND.pitch + 13;
-const leatherLen = (sign: Sign) => (sign === 1 ? 95 : 62); // long tail side at 12h, buckle side at 6h
-const KEEPER_S = 52;
-const BUCKLE_S = 63;
+const CLASP_S = BAND.endLink + BAND.linksBottom * BAND.pitch + BAND.claspLength / 2;
+const leatherLen = (sign: Sign) => (sign === 1 ? BAND.halfLength - 1 : 62); // tail side closes the loop, buckle side shorter
+const KEEPER_S = 56;
+const BUCKLE_S = 66;
 
 /** Places something on the band path: local Y = along the band, local Z = band normal. */
 function OnBand({ s, sign, lift = 0, children }: { s: number; sign: Sign; lift?: number; children: ReactNode }) {
@@ -102,8 +102,8 @@ export function Clasp09({ config }: PartComponentProps) {
     <PartGroup id="09" offset={EXPLODE['09']}>
       {config.pulseira === 'aco' ? (
         <ExplodeShift offset={[0, -30, 0]}>
-          <OnBand s={CLASP_S} sign={-1} lift={0.6}>
-            <RoundedBox args={[21, 26, 5.5]} radius={1.5} smoothness={4} material={m.steelBrushed} />
+          <OnBand s={CLASP_S} sign={-1} lift={-0.6}>
+            <RoundedBox args={[21, BAND.claspLength, 5.5]} radius={1.5} smoothness={4} material={m.steelBrushed} />
             <mesh material={m.steelPolished} position={[0, 0, 2.85]}><boxGeometry args={[10, 12, 0.3]} /></mesh>
           </OnBand>
         </ExplodeShift>

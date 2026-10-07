@@ -17,14 +17,21 @@ describe('geom', () => {
     const x = box(cylinderX(1, 8, 22));
     expect([x.min.x, x.max.x]).toEqual([expect.closeTo(8), expect.closeTo(22)]);
   });
-  it('bandFrame começa na ponta da alça e curva para trás', () => {
+  it('bandFrame sai da ponta da alça e fecha em volta do pulso', () => {
     const top = bandFrame(0, 1);
-    expect(top.pos.toArray()).toEqual([0, R.lugEndY, Z.lugCenter]);
-    expect(top.angle).toBeCloseTo(0);
-    expect(bandFrame(0, -1).angle).toBeCloseTo(Math.PI);
-    const far = bandFrame(60, 1);
-    expect(far.pos.z).toBeCloseTo(Z.lugCenter - BAND.k * 3600);
-    expect(far.angle).toBeLessThan(0);
+    expect(top.pos.x).toBe(0);
+    expect(top.pos.y).toBeCloseTo(R.lugEndY, 3);
+    expect(top.pos.z).toBeCloseTo(Z.lugCenter, 3);
+    expect(bandFrame(0, -1).pos.y).toBeCloseTo(-R.lugEndY, 3);
+    // the two sides meet behind the wrist: same point, mirrored
+    const endTop = bandFrame(BAND.halfLength, 1), endBottom = bandFrame(BAND.halfLength, -1);
+    expect(endTop.pos.y).toBeCloseTo(0, 1);
+    expect(endTop.pos.distanceTo(endBottom.pos)).toBeLessThan(0.1);
+    expect(endTop.pos.z).toBeCloseTo(BAND.centerZ - BAND.b, 1);
+    // symmetric about the XZ plane
+    expect(bandFrame(40, -1).pos.y).toBeCloseTo(-bandFrame(40, 1).pos.y, 5);
+    // path length matches the link layout of the 12h side
+    expect(BAND.halfLength).toBeCloseTo(BAND.endLink + BAND.linksTop * BAND.pitch, 0);
   });
   it('sweepBand gera malha fechada com tampas', () => {
     const g = sweepBand(1, 0, 40, 20, 18, 3.5, 60, 24);

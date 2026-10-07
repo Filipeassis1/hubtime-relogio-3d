@@ -26,8 +26,31 @@ export const Z = {
   lugCenter: 4.5, sideCenter: 5.1,
 } as const;
 
-/** Bracelet path: z = lugCenter − k·s², s along the band from the lug end. */
-export const BAND = { k: 0.009, endLink: 5, pitch: 7, linksTop: 11, linksBottom: 8, width: DIM.lugWidth } as const;
+/**
+ * Bracelet path: a closed ellipse in the YZ plane (the wrist) that passes through both lug ends.
+ * φ is measured from +Z; the 12h side runs φ0 → π, the 6h side mirrors it, and both meet behind the wrist.
+ */
+const WRIST = { a: 38, b: 30 }; // half-height (Y) and half-depth (Z) of the wrist, mm
+const PHI0 = Math.asin(DIM.lugToLug / 2 / WRIST.a);
+const CENTER_Z = 4.5 - WRIST.b * Math.cos(PHI0); // ellipse passes through (y = lugEnd, z = lugCenter)
+const wristPoint = (phi: number): [number, number] => [WRIST.a * Math.sin(phi), CENTER_Z + WRIST.b * Math.cos(phi)];
+/** Cumulative arc length table φ0 → π: [s, φ][] */
+const ARC: [number, number][] = (() => {
+  const out: [number, number][] = [[0, PHI0]];
+  let s = 0, prev = wristPoint(PHI0);
+  for (let i = 1; i <= 2048; i++) {
+    const phi = PHI0 + ((Math.PI - PHI0) * i) / 2048, p = wristPoint(phi);
+    s += Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+    out.push([s, phi]);
+    prev = p;
+  }
+  return out;
+})();
+
+export const BAND = {
+  a: WRIST.a, b: WRIST.b, centerZ: CENTER_Z, phi0: PHI0, arc: ARC, halfLength: ARC[ARC.length - 1][0],
+  endLink: 5, pitch: 7, linksTop: 11, linksBottom: 8, claspLength: 20, width: DIM.lugWidth,
+} as const;
 
 export const COLORS = {
   blue: '#1F4EBC', steelLight: '#C7CCD4', steelDark: '#7E8794', white: '#F7F8FA', black: '#1B1F24', gold: '#C7A44B',
@@ -45,12 +68,12 @@ export const EXPLODE: Record<PartId, Vec3> = {
 /** Where the defect pin sits, when the part's box center would be hidden (rings, two-sided bracelet parts). */
 export const PIN_ANCHOR: Partial<Record<PartId, Vec3>> = {
   '01': [16.9, -6, 1.5], '12': [16.6, 6, 10.3], '02': [0, 18.5, 10.7], '04': [-20.5, 0, 5],
-  '19': [0, 70, -16], '07': [24.5, 0, 5.1], '21': [17, 0, 5.1], '03': [23.5, 11, 5.1], '17': [10.6, 40, 0], '20': [0, 27, 4.5], '16': [0, -76, -20],
+  '19': [0, 35.2, -30], '07': [24.5, 0, 5.1], '21': [17, 0, 5.1], '03': [23.5, 11, 5.1], '17': [10.6, 36.6, -10.6], '20': [0, 27, 3], '16': [0, -21, -43.7],
 };
 
 /** Camera per view mode: closed front (head fills the frame), back, and a 3/4 side view of the exploded stack. */
 export const VIEWS: Record<'frente' | 'traseira' | 'explodido', View> = {
   frente: { position: [62, 34, 200], target: [0, -2, 2] },
-  traseira: { position: [-70, 34, -200], target: [0, -2, 2] },
+  traseira: { position: [-165, 18, -95], target: [0, -2, -4] }, // looks through the loop opening, where the wrist goes
   explodido: { position: [330, 80, 175], target: [0, 0, 6] },
 };
