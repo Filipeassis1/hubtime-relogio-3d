@@ -1,0 +1,22 @@
+.ws { display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: 100vh; }
+.ws-stage { position: relative; background: radial-gradient(80% 90% at 50% 40%, #f4f6f9, #dfe4ec); }
+.ws-stage canvas { display: block; }
+.ws-side { border-left: 1px solid #d5dbe3; background: #fff; overflow: auto; padding: 16px; display: grid; gap: 16px; align-content: start; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar button, .seg button { border: 1px solid #d5dbe3; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; }
+.seg button:first-child { border-radius: 8px 0 0 8px; }
+.seg button:last-child { border-radius: 0 8px 8px 0; }
+button[aria-pressed="true"] { background: #1f4ebc; border-color: #1f4ebc; color: #fff; }
+.panel h2 { font-size: 16px; margin: 0 0 8px; }
+.panel fieldset { border: 0; margin: 0; padding: 0; }
+.panel label { display: flex; gap: 8px; padding: 4px 0; }
+.note { color: #5b6472; font-size: 13px; margin: 0 0 6px; }
+.parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.parts button { width: 100%; display: flex; justify-content: space-between; gap: 8px; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 6px; cursor: pointer; font: inherit; }
+.parts button:hover { background: #f1f4f9; }
+.parts button[aria-current="true"] { background: #e8eefb; }
+.badge { background: #ff6a2b; color: #fff; border-radius: 999px; padding: 0 7px; font-size: 12px; }
+.tooltip { position: fixed; pointer-events: none; background: #1b1f24; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 13px; z-index: 10; }
+.json { position: fixed; left: 12px; bottom: 12px; max-width: min(520px, 50vw); max-height: 220px; overflow: auto; margin: 0; padding: 12px; border-radius: 8px; background: #0f1217; color: #cfe3ff; font: 12px/1.4 ui-monospace, monospace; }
