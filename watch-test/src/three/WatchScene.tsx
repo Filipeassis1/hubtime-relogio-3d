@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, type Dispatch } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { EffectComposer, N8AO, Outline, Selection, ToneMapping } from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
+import { KernelSize, ToneMappingMode } from 'postprocessing';
 import type * as THREE from 'three';
 import type { PartId } from '../data/parts';
 import { COLORS, VIEWS } from '../data/watchParams';
@@ -36,14 +36,14 @@ export function WatchScene({ state, dispatch, hoverId, onHover }: WatchSceneProp
       flat
       dpr={[1, 2]}
       gl={{ antialias: false }}
-      camera={{ fov: 28, near: 1, far: 4000, position: VIEWS.assembled.position }}
+      camera={{ fov: 28, near: 1, far: 4000, position: VIEWS.frente.position }}
       onPointerMissed={() => dispatch({ type: 'select', id: null })}
     >
       <Suspense fallback={null}>
         <Selection>
           <EffectComposer multisampling={4} autoClear={false}>
             <N8AO aoRadius={2.5} distanceFalloff={1} intensity={2.2} quality="high" />
-            <Outline visibleEdgeColor={OUTLINE} hiddenEdgeColor={OUTLINE_HIDDEN} edgeStrength={6} width={2000} />
+            <Outline blur kernelSize={KernelSize.VERY_SMALL} visibleEdgeColor={OUTLINE} hiddenEdgeColor={OUTLINE_HIDDEN} edgeStrength={12} width={2000} />
             <ToneMapping mode={ToneMappingMode.NEUTRAL} />
           </EffectComposer>
           <Stage>
@@ -52,7 +52,7 @@ export function WatchScene({ state, dispatch, hoverId, onHover }: WatchSceneProp
         </Selection>
         <Ready />
       </Suspense>
-      <CameraRig groups={groups} activeId={state.activeId} explode={state.explode} />
+      <CameraRig groups={groups} activeId={state.activeId} view={state.view} />
     </Canvas>
   );
 }

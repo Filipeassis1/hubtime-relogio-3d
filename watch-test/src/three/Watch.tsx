@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, type Dispatch, type MutableRefObject } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type * as THREE from 'three';
-import { PART_IDS, type PartId } from '../data/parts';
+import { PART_BY_ID, PART_IDS, type PartId } from '../data/parts';
 import { isPresent } from '../data/config';
 import { partState, pickPart } from '../state/picking';
 import type { Action, SelectionState } from '../state/selection';
@@ -23,7 +23,7 @@ export function Watch({ state, dispatch, hoverId, onHover, groups }: WatchProps)
   const explode = useRef(0);
   const raw = useRef(0);
   useFrame((_, dt) => {
-    const dir = state.explode ? 1 : -1;
+    const dir = state.view === 'explodido' ? 1 : -1;
     raw.current = Math.min(1, Math.max(0, raw.current + (dir * dt) / EXPLODE_SECONDS));
     explode.current = easeInOut(raw.current);
   });
@@ -53,7 +53,7 @@ export function Watch({ state, dispatch, hoverId, onHover, groups }: WatchProps)
           if (id) dispatch({ type: 'select', id });
         }}
       >
-        {PART_IDS.filter((id) => isPresent(id, state.config)).map((id) => {
+        {PART_IDS.filter((id) => isPresent(id, state.config) && (state.view === 'explodido' || !PART_BY_ID[id].interna)).map((id) => {
           const C = PART_COMPONENTS[id];
           return C ? <C key={id} config={state.config} /> : null;
         })}

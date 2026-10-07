@@ -4,9 +4,11 @@ import { DEFAULT_CONFIG, configWith, type WatchConfig } from '../data/config';
 export interface SelectedPart { id: PartId; nome: string; sintomas: string[] }
 export interface Selection { modelo: 'geral'; config: WatchConfig; pecas: SelectedPart[] }
 
+export type ViewMode = 'frente' | 'traseira' | 'explodido';
+
 export interface SelectionState {
   config: WatchConfig;
-  explode: boolean;
+  view: ViewMode;
   activeId: PartId | null;
   sintomas: Partial<Record<PartId, string[]>>;
 }
@@ -16,7 +18,7 @@ export type Action =
   | { type: 'selectFromList'; id: PartId }
   | { type: 'toggleSymptom'; id: PartId; sintoma: string }
   | { type: 'setConfig'; config: Partial<WatchConfig> }
-  | { type: 'setExplode'; value: boolean }
+  | { type: 'setView'; view: ViewMode }
   | { type: 'clear' };
 
 export function initState(initial?: Selection): SelectionState {
@@ -30,7 +32,7 @@ export function initState(initial?: Selection): SelectionState {
     const valid = PART_BY_ID[p.id].sintomas.filter((x) => p.sintomas?.includes(x));
     if (valid.length) sintomas[p.id] = valid;
   }
-  return { config, explode: false, activeId: null, sintomas };
+  return { config, view: 'frente', activeId: null, sintomas };
 }
 
 export function reducer(s: SelectionState, a: Action): SelectionState {
@@ -42,7 +44,7 @@ export function reducer(s: SelectionState, a: Action): SelectionState {
         ...s,
         activeId: a.id,
         config: configWith(a.id, s.config),
-        explode: s.explode || PART_BY_ID[a.id].interna,
+        view: PART_BY_ID[a.id].interna ? 'explodido' : s.view,
       };
     case 'toggleSymptom': {
       const def = PART_BY_ID[a.id];
@@ -57,8 +59,8 @@ export function reducer(s: SelectionState, a: Action): SelectionState {
     }
     case 'setConfig':
       return { ...s, config: { ...s.config, ...a.config } };
-    case 'setExplode':
-      return s.explode === a.value ? s : { ...s, explode: a.value };
+    case 'setView':
+      return s.view === a.view ? s : { ...s, view: a.view };
     case 'clear':
       return { ...s, activeId: null, sintomas: {} };
   }

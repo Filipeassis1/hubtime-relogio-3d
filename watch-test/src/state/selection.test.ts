@@ -4,7 +4,7 @@ import { initState, reducer, toSelection, type Selection } from './selection';
 describe('selection', () => {
   it('estado inicial: aço, sem capa, montado, nada ativo', () => {
     expect(initState()).toEqual({
-      config: { pulseira: 'aco', capaResina: false }, explode: false, activeId: null, sintomas: {},
+      config: { pulseira: 'aco', capaResina: false }, view: 'frente', activeId: null, sintomas: {},
     });
   });
 
@@ -37,9 +37,18 @@ describe('selection', () => {
     expect(s.config.pulseira).toBe('couro');
   });
 
-  it('selecionar pela lista uma peça interna explode a vista', () => {
-    expect(reducer(initState(), { type: 'selectFromList', id: '13' }).explode).toBe(true);
-    expect(reducer(initState(), { type: 'selectFromList', id: '04' }).explode).toBe(false);
+  it('selecionar pela lista uma peça interna vai para a vista explodida', () => {
+    expect(reducer(initState(), { type: 'selectFromList', id: '13' }).view).toBe('explodido');
+    const back = reducer(initState(), { type: 'setView', view: 'traseira' });
+    expect(reducer(back, { type: 'selectFromList', id: '04' }).view).toBe('traseira');
+  });
+
+  it('troca entre frente, traseira e explodido', () => {
+    let s = reducer(initState(), { type: 'setView', view: 'traseira' });
+    expect(s.view).toBe('traseira');
+    s = reducer(s, { type: 'setView', view: 'explodido' });
+    expect(s.view).toBe('explodido');
+    expect(reducer(s, { type: 'setView', view: 'explodido' })).toBe(s);
   });
 
   it('trocar configuração mantém sintomas de peças que saíram', () => {
@@ -53,13 +62,13 @@ describe('selection', () => {
     });
   });
 
-  it('clear zera sintomas e peça ativa, mantém configuração e explosão', () => {
+  it('clear zera sintomas e peça ativa, mantém configuração e vista', () => {
     let s = reducer(initState(), { type: 'selectFromList', id: '13' });
     s = reducer(s, { type: 'toggleSymptom', id: '13', sintoma: 'Parada / Não funciona' });
     s = reducer(s, { type: 'clear' });
     expect(s.activeId).toBeNull();
     expect(s.sintomas).toEqual({});
-    expect(s.explode).toBe(true);
+    expect(s.view).toBe('explodido');
   });
 
   it('toSelection ordena peças por ID', () => {

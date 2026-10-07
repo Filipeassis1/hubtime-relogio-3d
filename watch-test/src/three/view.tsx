@@ -27,19 +27,36 @@ export function findPartId(o: THREE.Object3D | null): string | undefined {
   return undefined;
 }
 
-interface Orig { color?: THREE.Color; envMapIntensity: number }
+interface Orig {
+  color?: THREE.Color; map: THREE.Texture | null; envMapIntensity: number; metalness: number; roughness: number;
+  transparent: boolean; opacity: number; depthWrite: boolean;
+}
 
-/** Unselected parts get slightly darker while another part is active — always opaque, materials stay true. */
+const GHOST = new THREE.Color('#e8ecf2');
+
+/** Isolation: while another part is active, this one becomes a pale, desaturated, translucent ghost (context kept). */
 function applyState(root: THREE.Object3D, state: PartState) {
-  const dim = state === 'dimmed';
+  const ghost = state === 'dimmed';
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh || mesh.userData.hitProxy) return;
+    mesh.renderOrder = ghost ? 1 : 0; // ghosts draw after the opaque selection
     for (const mat of ([] as THREE.Material[]).concat(mesh.material)) {
       const m = mat as THREE.MeshStandardMaterial;
-      const orig = (m.userData.orig ??= { color: m.color?.clone(), envMapIntensity: m.envMapIntensity ?? 1 }) as Orig;
-      if (m.color && orig.color) m.color.copy(orig.color).multiplyScalar(dim ? 0.8 : 1);
-      if (m.envMapIntensity !== undefined) m.envMapIntensity = orig.envMapIntensity * (dim ? 0.7 : 1);
+      const orig = (m.userData.orig ??= {
+        color: m.color?.clone(), map: m.map ?? null, envMapIntensity: m.envMapIntensity ?? 1,
+        metalness: m.metalness ?? 0, roughness: m.roughness ?? 1,
+        transparent: m.transparent, opacity: m.opacity, depthWrite: m.depthWrite,
+      }) as Orig;
+      if (m.color && orig.color) { m.color.copy(orig.color); if (ghost) m.color.lerp(GHOST, 0.8); }
+      if ('map' in m) m.map = ghost ? null : orig.map;
+      if (m.envMapIntensity !== undefined) m.envMapIntensity = orig.envMapIntensity * (ghost ? 0.6 : 1);
+      if (m.metalness !== undefined) m.metalness = ghost ? 0 : orig.metalness;          // frosted, not chrome
+      if (m.roughness !== undefined) m.roughness = ghost ? 0.6 : orig.roughness;
+      m.transparent = ghost || orig.transparent;
+      m.opacity = ghost ? 0.38 : orig.opacity;
+      m.depthWrite = ghost ? false : orig.depthWrite;
+      m.needsUpdate = true;
     }
   });
 }
