@@ -22,10 +22,11 @@ const OUTLINE_HIDDEN = 0x9fb4d8;
 
 /** Marks the scene ready for scripts/preview.py once everything inside Suspense has loaded. */
 function Ready() {
-  const { gl, scene, camera } = useThree();
+  const { gl, scene, camera, controls } = useThree();
   useEffect(() => {
-    (window as unknown as { __app: unknown }).__app = { renderer: gl, scene, camera, ready: true };
-  }, [gl, scene, camera]);
+    const w = window as unknown as { __app?: Record<string, unknown> };
+    w.__app = Object.assign(w.__app ?? {}, { renderer: gl, scene, camera, controls, ready: true });
+  }, [gl, scene, camera, controls]);
   return null;
 }
 
@@ -35,7 +36,7 @@ export function WatchScene({ state, dispatch, hoverId, onHover }: WatchSceneProp
     <Canvas
       flat
       dpr={[1, 2]}
-      gl={{ antialias: false }}
+      gl={{ antialias: false, preserveDrawingBuffer: true }} // keeps the frame readable for screenshot capture
       camera={{ fov: 28, near: 1, far: 4000, position: VIEWS.frente.position }}
       onPointerMissed={() => dispatch({ type: 'select', id: null })}
     >

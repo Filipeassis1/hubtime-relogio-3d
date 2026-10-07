@@ -12,7 +12,7 @@ export function ChestStrap06() {
   const mid = ARC / 2;
   return (
     <PartGroup id="06" offset={EXPLODE['06']}>
-      <group position={[95, -38.3, -95]} rotation={[-Math.PI / 2, 0, 0.5]} scale={0.7}>
+      <group position={[150, -38.3, -170]} rotation={[-Math.PI / 2, 0, 0.5]} scale={0.7}>
         <mesh material={m.silicone} scale={[1, 1, 3.5]}><torusGeometry args={[RADIUS, 2.6, 12, 120, ARC]} /></mesh>
         <group position={[Math.cos(mid) * RADIUS, Math.sin(mid) * RADIUS, 0]} rotation={[0, 0, mid + Math.PI / 2]}>
           <RoundedBox args={[36, 9, 26]} radius={3} smoothness={4} material={m.resin} />

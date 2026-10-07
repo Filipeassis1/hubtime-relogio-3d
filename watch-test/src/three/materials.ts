@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { COLORS, DIM, R } from '../data/watchParams';
+import { COLORS, R } from '../data/watchParams';
 import { bezelTexture, brushedRoughness, dialTexture, lcdTexture, polishedRoughness, sunburstAnisotropy } from './textures';
 
 export function createMaterials() {
@@ -26,9 +26,10 @@ export function createMaterials() {
       anisotropy: 1, anisotropyMap: sunburstAnisotropy(), clearcoat: 0.6, clearcoatRoughness: 0.12,
     }),
     lume: new THREE.MeshStandardMaterial({ color: '#eef2ec', roughness: 0.55, emissive: '#dfe9e2', emissiveIntensity: 0.05 }),
+    // sapphire as a clear coat of reflections (no transmission: it rendered as an opaque disc when nothing sits behind it)
     sapphire: new THREE.MeshPhysicalMaterial({
-      color: '#ffffff', metalness: 0, roughness: 0.02, transmission: 1, thickness: DIM.crystalThickness, ior: 1.77,
-      specularIntensity: 0.6, specularColor: new THREE.Color('#dbe6ff'), // AR coating: dimmer, slightly blue reflections
+      color: '#eef3ff', metalness: 0, roughness: 0.02, transparent: true, opacity: 0.07, ior: 1.77,
+      specularIntensity: 0.8, specularColor: new THREE.Color('#dbe6ff'), envMapIntensity: 0.9, depthWrite: false,
     }),
     resin: new THREE.MeshPhysicalMaterial({ color: COLORS.black, roughness: 0.68, roughnessMap: polished, clearcoat: 0.1 }),
     rubber: new THREE.MeshStandardMaterial({ color: '#15171b', roughness: 0.9 }),

@@ -26,6 +26,12 @@ export function WatchSelector({ initial, onChange }: WatchSelectorProps) {
     onChangeRef.current?.(selection);
   }, [selection]);
 
+  // test/screenshot hook: lets scripts switch views and select parts without clicking
+  useEffect(() => {
+    const w = window as unknown as { __app?: Record<string, unknown> };
+    w.__app = Object.assign(w.__app ?? {}, { dispatch });
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') dispatch({ type: 'select', id: null }); };
     window.addEventListener('keydown', onKey);
