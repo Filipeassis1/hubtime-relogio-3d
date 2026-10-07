@@ -9,7 +9,7 @@ export function Anel01() {
   const m = useMats();
   return (
     <PartGroup id="01" offset={EXPLODE['01']}
-      proxy={<HitProxy position={[0, 0, Z.backTop]}><torusGeometry args={[16.9, 1.6, 8, 64]} /></HitProxy>}>
+      proxy={<HitProxy whenExploded position={[0, 0, Z.backTop]}><torusGeometry args={[16.9, 1.6, 8, 64]} /></HitProxy>}>
       <mesh material={m.rubber} position={[0, 0, Z.backTop]}><torusGeometry args={[16.9, 0.45, 12, 128]} /></mesh>
     </PartGroup>
   );
@@ -21,7 +21,7 @@ export function Junta12() {
   const geo = useMemo(() => lathe([[16.3, 9.9], [16.9, 9.9], [16.9, 10.7], [16.3, 10.7], [16.3, 9.9]]), []);
   return (
     <PartGroup id="12" offset={EXPLODE['12']}
-      proxy={<HitProxy position={[0, 0, 10.3]}><torusGeometry args={[16.6, 1.6, 8, 64]} /></HitProxy>}>
+      proxy={<HitProxy whenExploded position={[0, 0, 10.3]}><torusGeometry args={[16.6, 1.6, 8, 64]} /></HitProxy>}>
       <mesh geometry={geo} material={m.rubber} />
     </PartGroup>
   );

@@ -44,7 +44,7 @@ export function Tige21() {
   const rod = useMemo(() => cylinderX(0.45, 8, CROWN_X0 + 0.5, 16), []);
   return (
     <PartGroup id="21" offset={EXPLODE['21']}
-      proxy={<HitProxy position={[(8 + CROWN_X0) / 2, 0, Z.sideCenter]} rotation={[0, 0, Math.PI / 2]}>
+      proxy={<HitProxy whenExploded position={[(8 + CROWN_X0) / 2, 0, Z.sideCenter]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[1.4, 1.4, CROWN_X0 - 8, 8]} />
       </HitProxy>}>
       <mesh geometry={rod} material={m.steelPolished} position={[0, 0, Z.sideCenter]} />

@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, type Dispatch } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { EffectComposer, Outline, Selection, ToneMapping } from '@react-three/postprocessing';
+import { EffectComposer, N8AO, Outline, Selection, ToneMapping } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import type * as THREE from 'three';
 import type { PartId } from '../data/parts';
@@ -17,7 +17,8 @@ export interface WatchSceneProps {
   onHover: (id: PartId | null, at?: { x: number; y: number }) => void;
 }
 
-const OUTLINE = parseInt(COLORS.hover.slice(1), 16);
+const OUTLINE = parseInt(COLORS.selected.slice(1), 16);
+const OUTLINE_HIDDEN = 0x9fb4d8;
 
 /** Marks the scene ready for scripts/preview.py once everything inside Suspense has loaded. */
 function Ready() {
@@ -41,7 +42,8 @@ export function WatchScene({ state, dispatch, hoverId, onHover }: WatchSceneProp
       <Suspense fallback={null}>
         <Selection>
           <EffectComposer multisampling={4} autoClear={false}>
-            <Outline blur visibleEdgeColor={OUTLINE} hiddenEdgeColor={OUTLINE} edgeStrength={6} width={1200} />
+            <N8AO aoRadius={2.5} distanceFalloff={1} intensity={2.2} quality="high" />
+            <Outline visibleEdgeColor={OUTLINE} hiddenEdgeColor={OUTLINE_HIDDEN} edgeStrength={6} width={2000} />
             <ToneMapping mode={ToneMappingMode.NEUTRAL} />
           </EffectComposer>
           <Stage>

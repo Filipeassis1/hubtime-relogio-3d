@@ -6,7 +6,7 @@ export function Stage({ children }: { children: ReactNode }) {
   return (
     <>
       <Environment resolution={512} environmentIntensity={0.85}>
-        <color attach="background" args={['#8f98a6']} />
+        <color attach="background" args={['#4d5560']} />
         <Lightformer form="rect" intensity={3} color="#ffffff" position={[0, 6, 2]} rotation={[Math.PI / 2, 0, 0]} scale={[14, 6, 1]} />
         <Lightformer form="rect" intensity={2} color="#f4f1ec" position={[-7, 1, 3]} rotation={[0, Math.PI / 2, 0]} scale={[10, 4, 1]} />
         <Lightformer form="rect" intensity={1.6} color="#e6eeff" position={[7, 0, -2]} rotation={[0, -Math.PI / 2, 0]} scale={[10, 3, 1]} />

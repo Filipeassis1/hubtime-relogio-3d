@@ -35,6 +35,7 @@ export function Watch({ state, dispatch, hoverId, onHover, groups }: WatchProps)
   const view = useMemo<WatchView>(() => ({
     explode, register,
     stateOf: (id) => partState(id, state.activeId, hoverId, !!state.sintomas[id]?.length),
+    defectCount: (id) => state.sintomas[id]?.length ?? 0,
   }), [register, state.activeId, state.sintomas, hoverId]);
 
   const pick = (e: ThreeEvent<PointerEvent | MouseEvent>) =>

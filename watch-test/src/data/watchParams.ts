@@ -22,7 +22,7 @@ export const R = {
 /** Heights along Z (mm), back of the caseback = 0, top of the crystal = 12.5. */
 export const Z = {
   backTop: 1.5, caseTop: 8.7, bezelTop: 8.7 + DIM.bezelThickness, crystalTop: DIM.caseThickness,
-  dial: 7.0, movement: [2.6, 6.2] as const, module: [1.6, 2.1] as const,
+  dial: 7.0, movement: [2.6, 5.8] as const, module: [1.6, 2.1] as const,
   lugCenter: 4.5, sideCenter: 5.1,
 } as const;
 
@@ -40,6 +40,12 @@ export const EXPLODE: Record<PartId, Vec3> = {
   '07': [14, 0, 0], '08': [0, 0, 10], '09': [0, 0, 0], '10': [0, 0, -34], '11': [0, 0, 8], '12': [0, 0, 28],
   '13': [0, 0, -14], '14': [0, 0, -22], '15': [0, 0, 5], '16': [0, 0, 0], '17': [18, 0, 0], '18': [0, 0, 15],
   '19': [0, 0, 0], '20': [0, 0, 0], '21': [6, 0, 0], '22': [0, 0, 34],
+};
+
+/** Where the defect pin sits, when the part's box center would be hidden (rings, two-sided bracelet parts). */
+export const PIN_ANCHOR: Partial<Record<PartId, Vec3>> = {
+  '01': [16.9, -6, 1.5], '12': [16.6, 6, 10.3], '02': [0, 18.5, 10.7], '04': [-20.5, 0, 5],
+  '19': [0, 70, -16], '07': [24.5, 0, 5.1], '21': [17, 0, 5.1], '03': [23.5, 11, 5.1], '17': [10.6, 40, 0], '20': [0, 27, 4.5], '16': [0, -76, -20],
 };
 
 export const VIEWS: { assembled: View; exploded: View } = {
