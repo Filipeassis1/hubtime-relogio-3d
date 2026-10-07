@@ -43,6 +43,6 @@ export const EXPLODE: Record<PartId, Vec3> = {
 };
 
 export const VIEWS: { assembled: View; exploded: View } = {
-  assembled: { position: [150, 55, 320], target: [0, -8, -12] },
+  assembled: { position: [175, 70, 400], target: [0, -14, -14] },
   exploded: { position: [330, 110, 120], target: [0, 0, 4] },
 };

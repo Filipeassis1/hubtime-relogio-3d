@@ -5,13 +5,13 @@ import { bezelTexture, dialTexture, lcdTexture } from './textures';
 
 export function createMaterials() {
   return {
-    steelBrushed: new THREE.MeshPhysicalMaterial({ color: COLORS.steelLight, metalness: 1, roughness: 0.34, anisotropy: 0.7 }),
+    steelBrushed: new THREE.MeshPhysicalMaterial({ color: COLORS.steelLight, metalness: 1, roughness: 0.42, anisotropy: 0.7 }),
     steelPolished: new THREE.MeshPhysicalMaterial({ color: COLORS.steelLight, metalness: 1, roughness: 0.07 }),
     steelDark: new THREE.MeshPhysicalMaterial({ color: COLORS.steelDark, metalness: 1, roughness: 0.4 }),
     bezelInsert: new THREE.MeshPhysicalMaterial({
-      map: bezelTexture(R.insertInner, R.insertOuter), metalness: 0.2, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08,
+      map: bezelTexture(R.insertInner, R.insertOuter), color: '#c9d2e6', metalness: 0.2, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.08,
     }),
-    dial: new THREE.MeshPhysicalMaterial({ map: dialTexture(R.dial), metalness: 0.45, roughness: 0.32, clearcoat: 0.5 }),
+    dial: new THREE.MeshPhysicalMaterial({ map: dialTexture(R.dial), color: '#b8c3dd', metalness: 0.5, roughness: 0.3, clearcoat: 0.4 }),
     lume: new THREE.MeshStandardMaterial({ color: COLORS.white, roughness: 0.5, emissive: '#dfe9e2', emissiveIntensity: 0.08 }),
     sapphire: new THREE.MeshPhysicalMaterial({
       color: '#ffffff', metalness: 0, roughness: 0, transmission: 1, thickness: DIM.crystalThickness, ior: 1.77, specularIntensity: 1,

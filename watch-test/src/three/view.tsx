@@ -48,7 +48,7 @@ function applyState(root: THREE.Object3D, state: PartState) {
       }
       const dim = state === 'dimmed';
       m.transparent = dim || orig.transparent;
-      m.opacity = dim ? 0.28 : orig.opacity;
+      m.opacity = dim ? 0.45 : orig.opacity;
       m.depthWrite = dim ? false : orig.depthWrite;
       m.needsUpdate = true;
     }

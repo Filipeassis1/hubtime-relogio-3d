@@ -53,7 +53,7 @@ export function dialTexture(radius: number) {
     const k = 1024 / (2 * radius);
     g.translate(512, 512);
     const grad = g.createRadialGradient(0, 0, 0, 0, 0, 512);
-    grad.addColorStop(0, '#3366d6'); grad.addColorStop(0.7, COLORS.blue); grad.addColorStop(1, '#173c93');
+    grad.addColorStop(0, '#2a57c4'); grad.addColorStop(0.65, COLORS.blue); grad.addColorStop(1, '#10296b');
     g.fillStyle = grad; g.fillRect(-512, -512, 1024, 1024);
     for (let i = 0; i < 720; i++) {
       g.save(); g.rotate((i / 720) * Math.PI * 2);
