@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, type Dispatch } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, advance, useThree } from '@react-three/fiber';
 import { EffectComposer, N8AO, Outline, Selection, ToneMapping } from '@react-three/postprocessing';
 import { KernelSize, ToneMappingMode } from 'postprocessing';
 import type * as THREE from 'three';
@@ -25,7 +25,7 @@ function Ready() {
   const { gl, scene, camera, controls } = useThree();
   useEffect(() => {
     const w = window as unknown as { __app?: Record<string, unknown> };
-    w.__app = Object.assign(w.__app ?? {}, { renderer: gl, scene, camera, controls, ready: true });
+    w.__app = Object.assign(w.__app ?? {}, { renderer: gl, scene, camera, controls, advance, ready: true }); // advance: render frames manually (hidden tabs pause rAF)
   }, [gl, scene, camera, controls]);
   return null;
 }
