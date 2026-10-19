@@ -7,8 +7,9 @@ Cada etapa grande começa com uma tag no git. Se o resultado novo não agradar, 
 | Tag | Data | Estado |
 |---|---|---|
 | `v1-relogio-base` | 2026-10-19 | Relógio geral com as 22 peças, vistas Frente / Traseira / Explodido, seleção com isolamento, pulseira fechada, renders em `watch-test/renders/` (frente, traseira, explodido, zoom na coroa, com e sem peça ativa). Antes do procedural refinado. |
+| `v2-procedural-refinado` | 2026-10-19 | Procedural refinado aprovado: caixa extrudada com alças, bezel com 120 dentes, ponteiros facetados, elos desencontrados, rehaut, vidro Ø31,5, máquina NH35, pacote SVG de referência, cinta (06) só aparece quando selecionada. |
 
-O trabalho novo (procedural refinado) acontece no branch `feat/procedural-refinado`. O `main` continua igual ao `v1-relogio-base` até a mudança ser aprovada.
+O `main` está no `v2-procedural-refinado`. Para voltar à versão anterior, use a tag `v1-relogio-base`.
 
 ## O que nunca muda entre versões
 
