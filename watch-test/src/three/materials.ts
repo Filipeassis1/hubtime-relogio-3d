@@ -25,6 +25,7 @@ export function createMaterials() {
       map: dialTexture(R.dial), color: '#c4cde3', metalness: 0.75, roughness: 0.32,
       anisotropy: 1, anisotropyMap: sunburstAnisotropy(), clearcoat: 0.6, clearcoatRoughness: 0.12,
     }),
+    rehaut: new THREE.MeshPhysicalMaterial({ color: '#1a3478', metalness: 0.35, roughness: 0.45 }),
     lume: new THREE.MeshStandardMaterial({ color: '#eef2ec', roughness: 0.55, emissive: '#dfe9e2', emissiveIntensity: 0.05 }),
     // sapphire as a clear coat of reflections (no transmission: it rendered as an opaque disc when nothing sits behind it)
     sapphire: new THREE.MeshPhysicalMaterial({

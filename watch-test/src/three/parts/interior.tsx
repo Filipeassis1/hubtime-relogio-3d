@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { EXPLODE, Z } from '../../data/watchParams';
+import { EXPLODE, R, Z } from '../../data/watchParams';
+import { PROFILE } from '../../data/profiles';
 import { cylinderZ, lathe } from '../geom';
 import { useMats } from '../materials';
 import { HitProxy, PartGroup } from '../view';
@@ -18,10 +19,10 @@ export function Anel01() {
 /** Crystal gasket under the bezel. */
 export function Junta12() {
   const m = useMats();
-  const geo = useMemo(() => lathe([[16.3, 9.9], [16.9, 9.9], [16.9, 10.7], [16.3, 10.7], [16.3, 9.9]]), []);
+  const geo = useMemo(() => lathe(PROFILE.junta), []);
   return (
     <PartGroup id="12" offset={EXPLODE['12']}
-      proxy={<HitProxy whenExploded position={[0, 0, 10.3]}><torusGeometry args={[16.6, 1.6, 8, 64]} /></HitProxy>}>
+      proxy={<HitProxy whenExploded position={[0, 0, 10.3]}><torusGeometry args={[R.crystal + 0.3, 1.6, 8, 64]} /></HitProxy>}>
       <mesh geometry={geo} material={m.rubber} />
     </PartGroup>
   );
@@ -30,7 +31,7 @@ export function Junta12() {
 export function Movement13() {
   const m = useMats();
   const [z0, z1] = Z.movement;
-  const body = useMemo(() => cylinderZ(13, z0, z1), [z0, z1]);
+  const body = useMemo(() => cylinderZ(R.movement, z0, z1), [z0, z1]);
   const jewels: [number, number][] = [[-6, 5], [3, 7], [7, -1], [-2, -8]];
   return (
     <PartGroup id="13" offset={EXPLODE['13']}>
