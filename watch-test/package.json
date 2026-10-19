@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "export:svg": "node scripts/export-svg.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

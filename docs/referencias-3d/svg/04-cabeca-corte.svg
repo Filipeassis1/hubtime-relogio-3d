@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="46mm" height="22mm" viewBox="-4 -19 46 22">
+<title>04 · Cabeça — meio corte 12h–6h</title>
+<style>
+  .part { fill: #e8ecf2; stroke: #171b22; stroke-width: .12; }
+  .cut { fill: #c9d2e6; stroke: #171b22; stroke-width: .1; }
+  .thin { fill: none; stroke: #1f4ebc; stroke-width: .08; }
+  .hidden { fill: none; stroke: #5a6270; stroke-width: .08; stroke-dasharray: .6 .4; }
+  .dim { stroke: #a35a00; stroke-width: .06; fill: none; }
+  text { font: .9px "IBM Plex Mono", monospace; fill: #171b22; }
+  .title { font: 600 1.4px "IBM Plex Sans", sans-serif; }
+  .lbl { fill: #1f4ebc; }
+  .dimt { fill: #a35a00; }
+</style>
+<text class="title" x="-3" y="-16.8">04 · Cabeça — meio corte 12h–6h</text>
+<text x="-3" y="-15.4">1:1 · mm · fonte: src/data/profiles.ts</text>
+<path class="cut" d="M0 0 L16.3 0 L17.5 -0.6 L17.5 -1.5 L0 -1.5 Z"/>
+<path class="cut" d="M16.8 -1.5 L19.9 -1.5 L20.5 -2.1 L20.5 -8.1 L19.9 -8.7 L16.8 -8.7 L16.8 -1.5 Z"/>
+<path class="cut" d="M16 -8.7 L21 -8.7 L21 -10.1 L16 -10.1 L16 -8.7 Z"/>
+<path class="cut" d="M16 -10.1 L20.4 -10.1 L19.8 -10.7 L16 -10.7 L16 -10.1 Z"/>
+<path class="part" d="M0 -10.1 L15.75 -10.1 L15.75 -12.1 L15.25 -12.5 L0 -12.5 Z"/>
+<path class="cut" d="M15.75 -9.9 L16.35 -9.9 L16.35 -10.7 L15.75 -10.7 L15.75 -9.9 Z"/>
+<path class="cut" d="M0 -6.6 L15.6 -6.6 L15.6 -7 L0 -7 Z"/>
+<path class="cut" d="M15.4 -7 L16.8 -7 L16.8 -8.7 L15.7 -8.7 L15.4 -7 Z"/>
+<path class="part" d="M0 -1.6 L13.7 -1.6 L13.7 -6.92 L0 -6.92 Z"/>
+<text class="lbl" x="9" y="-0.5">10 Fundo</text>
+<text class="lbl" x="23" y="-5">04 Caixa</text>
+<text class="lbl" x="23" y="-10.4">02 Bezel</text>
+<text class="lbl" x="6" y="-12.9">22 Vidro</text>
+<text class="lbl" x="23" y="-9.6">12 Junta</text>
+<text class="lbl" x="6" y="-7.6">15 Mostrador</text>
+<text class="lbl" x="23" y="-7.9">15 Rehaut</text>
+<text class="lbl" x="6" y="-4.2">13 Máquina</text>
+<path class="hidden" d="M0 1 L0 -14"/><path class="dim" d="M21 0 L26 0 M21 -12.5 L26 -12.5 M26 0 L26 -12.5"/>
+<text class="dimt" x="27.75" y="-6.25" text-anchor="middle" dominant-baseline="middle">12,5 total</text><path class="dim" d="M15.75 -10.7 L24.75 -10.7 M15.75 -12.5 L24.75 -12.5 M24.75 -10.7 L24.75 -12.5"/>
+<text class="dimt" x="27.9" y="-11.6" text-anchor="middle" dominant-baseline="middle">1,8 vidro</text><path class="dim" d="M0 -12.5 L0 -10.5 M15.75 -12.5 L15.75 -10.5 M0 -10.5 L15.75 -10.5"/>
+<text class="dimt" x="7.875" y="-9.8" text-anchor="middle" dominant-baseline="middle">Ø31,5 vidro (raio 15,75)</text>
+</svg>
