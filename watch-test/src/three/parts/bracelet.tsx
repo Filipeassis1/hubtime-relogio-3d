@@ -3,6 +3,7 @@ import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { BAND, EXPLODE, R, Z } from '../../data/watchParams';
+import { LINK } from '../../data/profiles';
 import { bandFrame, sweepBand } from '../geom';
 import { useMats } from '../materials';
 import { ExplodeShift, HitProxy, PartGroup } from '../view';
@@ -41,21 +42,22 @@ function fillInstances(mesh: THREE.InstancedMesh, items: { s: number; sign: Sign
 function SteelLinks({ sign }: { sign: Sign }) {
   const m = useMats();
   const g = useMemo(() => ({
-    outer: new RoundedBoxGeometry(6, BAND.pitch - 0.4, 3.5, 3, 0.8),
-    center: new RoundedBoxGeometry(8, BAND.pitch - 0.4, 3.0, 3, 0.8),
+    outer: new RoundedBoxGeometry(LINK.outerW, BAND.pitch - LINK.gap, LINK.outerT, 3, LINK.radius),
+    center: new RoundedBoxGeometry(LINK.centerW, BAND.pitch - LINK.gap, LINK.centerT, 3, LINK.radius),
   }), []);
   const outer = useRef<THREE.InstancedMesh>(null!);
   const center = useRef<THREE.InstancedMesh>(null!);
   const n = links(sign);
   useLayoutEffect(() => {
     const idx = Array.from({ length: n }, (_, i) => i);
-    fillInstances(outer.current, idx.flatMap((i) => [-7, 7].map((x) => ({ s: linkS(i), sign, x, lift: 0 }))));
-    fillInstances(center.current, idx.map((i) => ({ s: linkS(i), sign, x: 0, lift: 0.2 })));
+    fillInstances(outer.current, idx.flatMap((i) => [-LINK.outerX, LINK.outerX].map((x) => ({ s: linkS(i), sign, x, lift: 0 }))));
+    // center pieces sit on the joints between outer pieces, as on a real three-row bracelet
+    fillInstances(center.current, idx.slice(1).map((i) => ({ s: BAND.endLink + i * BAND.pitch, sign, x: 0, lift: 0.15 })));
   }, [n, sign]);
   return (
     <>
       <instancedMesh ref={outer} args={[g.outer, m.steelBrushed, n * 2]} />
-      <instancedMesh ref={center} args={[g.center, m.steelPolished, n]} />
+      <instancedMesh ref={center} args={[g.center, m.steelPolished, n - 1]} />
     </>
   );
 }

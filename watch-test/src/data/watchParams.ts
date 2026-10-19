@@ -15,14 +15,15 @@ export const R = {
   case: 20.5, caseInner: 16.8, back: 17.5,
   bezelInner: 16, bezelOuter: DIM.caseDiameter / 2,
   insertInner: 16.3, insertOuter: 20.1,
-  crystal: 16.3, dial: 15.6, crown: DIM.crownDiameter / 2,
+  crystal: 15.75, dial: 15.6, crown: DIM.crownDiameter / 2, movement: 13.7, // crystal Ø31,5 (pesquisa), movement Ø27,4 (NH35)
   lugEndY: DIM.lugToLug / 2,
 } as const;
 
 /** Heights along Z (mm), back of the caseback = 0, top of the crystal = 12.5. */
 export const Z = {
   backTop: 1.5, caseTop: 8.7, bezelTop: 8.7 + DIM.bezelThickness, crystalTop: DIM.caseThickness,
-  dial: 7.0, movement: [2.6, 5.8] as const, module: [1.6, 2.1] as const,
+  dial: 7.0, module: [1.6, 2.1] as const,
+  movement: [1.6, 6.92] as const, // NH35 height 5,32 mm; internals only render in the exploded view, so overlap is hidden
   lugCenter: 4.5, sideCenter: 5.1,
 } as const;
 
