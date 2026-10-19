@@ -1,0 +1,495 @@
+<title>Referências 3D HubTime</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: bench worksheet — summary + research findings on top, then one expandable card per part (01–22), mm values in mono. */
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --sunken: #eceef2;
+  --fg: #171b22;
+  --muted: #5a6270;
+  --line: #d9dde4;
+  --accent: #1f4ebc;
+  --accent-soft: #e4ebfa;
+  --ok: #1d7a4b;
+  --ok-soft: #e1f2e8;
+  --warn: #a35a00;
+  --warn-soft: #fbeedd;
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151a; --surface: #1a1e25; --sunken: #232831; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2e3540;
+    --accent: #7ea2ff; --accent-soft: #1f2a44; --ok: #5fcf93; --ok-soft: #173126; --warn: #f0a94e; --warn-soft: #362816;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151a; --surface: #1a1e25; --sunken: #232831; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2e3540;
+  --accent: #7ea2ff; --accent-soft: #1f2a44; --ok: #5fcf93; --ok-soft: #173126; --warn: #f0a94e; --warn-soft: #362816;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--font-sans); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.01em; }
+h2 { font-size: 19px; }
+h3 { font-size: 15px; }
+p { margin: 0; }
+a { color: var(--accent); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 68ch; }
+header { display: grid; gap: 10px; }
+
+.summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+.bar { height: 8px; background: var(--sunken); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.bar i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .3s ease; }
+.counts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.counts b { color: var(--fg); font-family: var(--font-mono); }
+.save-state { font-size: 13px; color: var(--muted); text-align: right; }
+.save-state[data-tone="warn"] { color: var(--warn); }
+
+section.block { display: grid; gap: 14px; }
+.std { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.std div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+.std b { display: block; margin-bottom: 2px; }
+
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.2 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--sunken); }
+tr:last-child td { border-bottom: 0; }
+.conf { display: inline-block; font: 500 12px/1 var(--font-mono); padding: 4px 7px; border-radius: 99px; white-space: nowrap; }
+.conf.alta { background: var(--ok-soft); color: var(--ok); }
+.conf.media { background: var(--warn-soft); color: var(--warn); }
+.gaps { display: grid; gap: 6px; padding-left: 18px; margin: 0; color: var(--fg); }
+
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 99px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.search { flex: 1 1 200px; min-width: 0; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 8px 12px; font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.parts { display: grid; gap: 10px; }
+details.part { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.part > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; }
+details.part > summary::-webkit-details-marker { display: none; }
+.pid { font: 600 15px/1 var(--font-mono); color: var(--accent); }
+.ptitle { display: grid; gap: 2px; min-width: 0; }
+.ptitle span { font-size: 13px; color: var(--muted); }
+.pills { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.pill { font: 500 12px/1 var(--font-mono); padding: 5px 8px; border-radius: 99px; background: var(--sunken); color: var(--muted); white-space: nowrap; }
+.pill.p1 { background: var(--accent-soft); color: var(--accent); }
+.pill[data-status="em-coleta"] { background: var(--warn-soft); color: var(--warn); }
+.pill[data-status="concluido"] { background: var(--ok-soft); color: var(--ok); }
+.body { border-top: 1px solid var(--line); padding: 16px; display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.body > .full { grid-column: 1 / -1; }
+.col { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.col h3 { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.check input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.meas { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 4px 10px; align-items: center; font-size: 14px; }
+.meas label { min-width: 0; }
+.meas small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin-top: -2px; margin-bottom: 4px; }
+.meas input { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 6px 8px; font: 14px var(--font-mono); text-align: right; }
+.sources { display: grid; gap: 6px; font-size: 14px; padding-left: 18px; margin: 0; }
+.tip { font-size: 14px; color: var(--muted); background: var(--sunken); border-radius: 8px; padding: 10px 12px; }
+textarea { width: 100%; min-height: 72px; resize: vertical; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+select { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; }
+.meta { font-size: 12px; color: var(--muted); }
+.empty { color: var(--muted); padding: 20px; text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; }
+.ro .writable { pointer-events: none; opacity: .65; }
+
+@media (max-width: 720px) {
+  .body { grid-template-columns: minmax(0, 1fr); }
+  .summary { grid-template-columns: minmax(0, 1fr); }
+  .save-state { text-align: left; }
+  details.part > summary { grid-template-columns: 34px minmax(0, 1fr); }
+  .pills { grid-column: 2; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap" id="app">
+  <header>
+    <span class="eyebrow">OS HubTime · Relógio geral 3D</span>
+    <h1>Referências 3D das 22 peças</h1>
+    <p class="lede">Checklist para a bancada coletar fotos, medidas e desenhos de cada peça do relógio geral. A estrutura das 22 peças não muda: cada referência só refina a forma e o acabamento da peça que já existe no 3D. As marcações ficam salvas para toda a equipe.</p>
+  </header>
+
+  <div class="summary" aria-live="polite">
+    <div>
+      <div class="counts">
+        <span><b id="c-done">0</b> concluídas</span>
+        <span><b id="c-doing">0</b> em coleta</span>
+        <span><b id="c-todo">22</b> pendentes</span>
+        <span><b id="c-p1">0/4</b> prioridade 1 concluídas</span>
+      </div>
+      <div class="bar" role="progressbar" aria-label="Peças concluídas" aria-valuemin="0" aria-valuemax="22" aria-valuenow="0"><i id="bar"></i></div>
+    </div>
+    <div class="save-state" id="save-state">Conectando ao registro compartilhado…</div>
+  </div>
+
+  <section class="block" aria-labelledby="h-std">
+    <h2 id="h-std">Padrão de entrega</h2>
+    <div class="std">
+      <div><b>Escala</b>Tudo em milímetros, escala 1:1, origem no centro do relógio.</div>
+      <div><b>Formato</b>Fotos sobre papel milimetrado e desenhos vetoriais em SVG exportados do Figma.</div>
+      <div><b>Vistas</b>Cima, lado e corte (meia seção) quando a peça tiver perfil.</div>
+      <div><b>Nomes</b>ID-peça-vista, por exemplo <span class="mono">04-caixa-topo.svg</span>, <span class="mono">19-elo-corte.svg</span>.</div>
+      <div><b>Relógios-base</b>1 analógico de mergulho em aço e 1 ana-digi ou digital de resina, da própria bancada.</div>
+      <div><b>Referência, não cópia</b>Usar medidas e técnica; o 3D continua genérico, sem logos ou desenho idêntico de marca.</div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-found">
+    <h2 id="h-found">O que a pesquisa já encontrou</h2>
+    <p class="lede">Dados públicos que já servem de ponto de partida. Os valores de varejistas variam entre fontes: confirmem na bancada antes de usar no 3D.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Peças</th><th>Dado encontrado</th><th>Fonte</th><th>Confiança</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">13 · 18 · 21</td><td>Máquina NH35A: Ø 27,40 mm, altura 5,32 mm, Ø de encaixe 29,36 mm com espaçador. Furos dos ponteiros 1,5 / 0,89 / 0,21 mm. Tige 351-200, rosca tap 10.</td><td><a href="https://www.timemodule.com/uploads/attachments/download/Spec%20Sheet/NH35_SS.pdf" target="_blank" rel="noopener">Time Module (ficha oficial)</a>, <a href="https://calibercorner.com/seiko-caliber-nh35a" target="_blank" rel="noopener">Caliber Corner</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">03 · 13 · 21</td><td>Cronógrafo VK63: 30,80 × 29,10 mm, altura 5,10 mm, Ø de encaixe 29,00 mm. Tige 351177 (tap 10) ou 351892 (tap 11).</td><td><a href="https://www.cousinsuk.com/pdf/categories/5871_seiko%20vk63,vk67,vk83.pdf" target="_blank" rel="noopener">Guia técnico SII (Cousins)</a>, <a href="https://calibercorner.com/hattori-sii-caliber-vk63" target="_blank" rel="noopener">Caliber Corner</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">04 · 22</td><td>Mergulho tipo SKX007 (referência de proporção): caixa 42,5 mm, alça a alça 46 mm, entre asas 22 mm, espessura 13 mm, vidro Ø 31,5 mm.</td><td><a href="https://www.thewatchsite.com/posts/66089" target="_blank" rel="noopener">The Watch Site (medição com paquímetro)</a></td><td><span class="conf media">média</span></td></tr>
+          <tr><td class="mono">22</td><td>Perfis de vidro Ø 31,5 mm: plano 3,0 mm; domo simples 4,2/3,6 mm; domo duplo 4,5/2,9 mm; domo duplo com 5,1 mm no centro.</td><td><a href="https://luciusatelier.com/collections/sapphire-crystals-swiss-quality-seiko-mod-parts" target="_blank" rel="noopener">Lucius Atelier</a>, <a href="https://www.ebay.de/itm/184408778225" target="_blank" rel="noopener">eBay (vendedor)</a></td><td><span class="conf media">média</span></td></tr>
+          <tr><td class="mono">02</td><td>Inserto de bezel inclinado: ~1,4 mm na borda interna, ~1,0 mm na externa.</td><td><a href="https://longislandwatch.com/products/embossed-sloped-ss-bezel-insert-for-seiko-skx007-skx009-skx011-c39" target="_blank" rel="noopener">Long Island Watch</a></td><td><span class="conf media">média</span></td></tr>
+          <tr><td class="mono">07</td><td>Coroa 6,5 mm: rosca tap 10 (0,90 mm), tubo 4,0 mm (rosca) e 2,7 mm (liso), coroa 4,0 mm de espessura, 7,6 mm com haste.</td><td><a href="https://www.esslinger.com/extra-large-threaded-screw-down-crown-and-tube-kit/" target="_blank" rel="noopener">Esslinger</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">17</td><td>Barras de mola: corpo 1,5 mm (social) ou 1,8 mm (esportivo), ponta 0,7–0,9 mm; comprimento = largura entre asas.</td><td><a href="https://help.archerwatchstraps.com/article/267-spring-bar-dimensions" target="_blank" rel="noopener">Archer</a>, <a href="https://www.esslinger.com/watch-band-pin-1-5mm-thick-steel-quick-release-pegged-spring-bar/" target="_blank" rel="noopener">Esslinger</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">09 · 19 · 20</td><td>Pulseira Strapcode 20 mm: espessura 4,2 mm, fivela 18 mm, terminais maciços em meia-lua.</td><td><a href="https://ocarat.com/en/angus-jubilee-stainless-steel-20mm-srpc35-ss201820b074-strapcode-54960.html" target="_blank" rel="noopener">Ocarat (Strapcode)</a>, <a href="https://longislandwatch.com/collections/strapcode-watch-bracelets/products/strapcode-20mm-super-o-boyer-watch-band-with-straight-ends-ss202003b023" target="_blank" rel="noopener">Long Island Watch</a></td><td><span class="conf media">média</span></td></tr>
+          <tr><td class="mono">12</td><td>Juntas de vidro em L (vidro com aba) ou I (vidro grosso); I em Hytrel com 0,80 ou 1,20 mm de altura. O-rings: Ø int × (altura × espessura) × Ø ext.</td><td><a href="https://www.perrinwatchparts.com/collections/crystal-gaskets" target="_blank" rel="noopener">Perrin</a>, <a href="https://www.cousinsuk.com/category/micro-ring-rubber-gaskets" target="_blank" rel="noopener">Cousins UK</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">05 · 08 · 14</td><td>Construção G-Shock: módulo "flutuante" em berço de uretano, botões e LCD ligados por cabo flexível, capa de resina sobre caixa. Vista explodida e lista de peças oficiais do módulo QW-2993.</td><td><a href="https://aluwriting4eng.commons.gc.cuny.edu/files/2020/05/Technical-Description-Final-Draft.pdf" target="_blank" rel="noopener">Descrição técnica DW-5000C</a>, <a href="https://www.manualslib.com/products/Casio-Rft-100-8702313.html" target="_blank" rel="noopener">Casio RFT-100 (manual de serviço)</a></td><td><span class="conf media">média</span></td></tr>
+          <tr><td class="mono">06</td><td>Cinta cardíaca Polar H10: sensor 34 × 65 × 10 mm, faixa M–XXL de 65–93 cm.</td><td><a href="https://the5krunner.com/specs/polar/h10/" target="_blank" rel="noopener">the5krunner</a>, <a href="https://adminnew.roguefitness.com/polar-h10-heart-rate-sensor" target="_blank" rel="noopener">Rogue Fitness</a></td><td><span class="conf alta">alta</span></td></tr>
+          <tr><td class="mono">09</td><td>Desenhos ortográficos de fecho dobrável e extensão de mergulho.</td><td><a href="https://patents.google.com/patent/US8739369" target="_blank" rel="noopener">US8739369</a>, <a href="https://patents.justia.com/patent/20120312052" target="_blank" rel="noopener">US 2012/0312052</a></td><td><span class="conf alta">alta</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Não achamos publicamente (fica com a bancada)</h3>
+    <ul class="gaps">
+      <li>Desenho técnico oficial de caixa com alças: só medições de terceiros, com variação de 45,2 a 49,5 mm alça a alça.</li>
+      <li>Medidas e perfis de ponteiros: anúncios divergem e medem de formas diferentes.</li>
+      <li>Vistas explodidas da Casio além do módulo QW-2993.</li>
+      <li>Medidas de terminais (end links) e de elos por fabricante.</li>
+      <li>Modelo CAD aberto de relógio de mergulho com pulseira de aço (GrabCAD tem só versões com pulseira NATO).</li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="h-list">
+    <div class="row">
+      <h2 id="h-list">Checklist por peça</h2>
+    </div>
+    <div class="tools" role="group" aria-label="Filtros">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">Todas</button>
+      <button class="chip" type="button" data-filter="1" aria-pressed="false">Prioridade 1</button>
+      <button class="chip" type="button" data-filter="2" aria-pressed="false">Prioridade 2</button>
+      <button class="chip" type="button" data-filter="3" aria-pressed="false">Prioridade 3</button>
+      <button class="chip" type="button" data-filter="open" aria-pressed="false">Não concluídas</button>
+      <input class="search" id="q" type="search" placeholder="Buscar peça ou código" aria-label="Buscar peça ou código">
+    </div>
+    <div class="parts" id="parts"></div>
+    <p class="empty" id="no-match" hidden>Nenhuma peça com esse filtro.</p>
+  </section>
+</div>
+
+<script>
+const T = { BANCADA: 'Bancada (relógios-base e estoque)' };
+const L = (t, u) => ({ t, u });
+const SRC = {
+  nh35: L('Ficha NH35 (Time Module)', 'https://www.timemodule.com/uploads/attachments/download/Spec%20Sheet/NH35_SS.pdf'),
+  nh35cc: L('NH35 no Caliber Corner', 'https://calibercorner.com/seiko-caliber-nh35a'),
+  vk63: L('Guia técnico VK63 (Cousins)', 'https://www.cousinsuk.com/pdf/categories/5871_seiko%20vk63,vk67,vk83.pdf'),
+  skx: L('Medidas SKX007 (The Watch Site)', 'https://www.thewatchsite.com/posts/66089'),
+  liwCase: L('Caixas SKX (Long Island Watch)', 'https://longislandwatch.com/collections/islander/products/skx007-replacement-stainless-steel-case-with-3-00-crown-and-crown-guards-case-03'),
+  shm: L('Caixas com medidas (Secondhandmods)', 'https://secondhandmods.com/collections/kits-cases/products/62mas-skx007-conversion-case-brushed-polished-silver-41mm'),
+  insert: L('Inserto de bezel (Long Island Watch)', 'https://longislandwatch.com/products/embossed-sloped-ss-bezel-insert-for-seiko-skx007-skx009-skx011-c39'),
+  bezel: L('Bezel SKX (Lucius Atelier)', 'https://luciusatelier.com/collections/bezels-swiss-quality-seiko-mod-parts/products/skx007-the-pilot-bezel-silver-mirror-polished'),
+  crystal: L('Vidros SKX (Lucius Atelier)', 'https://luciusatelier.com/collections/sapphire-crystals-swiss-quality-seiko-mod-parts'),
+  crown: L('Coroa e tubo 6,5 mm (Esslinger)', 'https://www.esslinger.com/extra-large-threaded-screw-down-crown-and-tube-kit/'),
+  springbar: L('Medidas de barras de mola (Archer)', 'https://help.archerwatchstraps.com/article/267-spring-bar-dimensions'),
+  strapcode: L('Pulseira Strapcode 20 mm (Ocarat)', 'https://ocarat.com/en/angus-jubilee-stainless-steel-20mm-srpc35-ss201820b074-strapcode-54960.html'),
+  strapcodeLiw: L('Pulseiras Strapcode (Long Island Watch)', 'https://longislandwatch.com/collections/strapcode-watch-bracelets/products/strapcode-20mm-super-o-boyer-watch-band-with-straight-ends-ss202003b023'),
+  clasp: L('Patente de fecho de mergulho US8739369', 'https://patents.google.com/patent/US8739369'),
+  oring: L('O-rings (Cousins UK)', 'https://www.cousinsuk.com/category/micro-ring-rubber-gaskets'),
+  gasket: L('Juntas de vidro L e I (Perrin)', 'https://www.perrinwatchparts.com/collections/crystal-gaskets'),
+  gshock: L('Construção G-Shock DW-5000C', 'https://aluwriting4eng.commons.gc.cuny.edu/files/2020/05/Technical-Description-Final-Draft.pdf'),
+  casioRft: L('Manual de serviço Casio RFT-100', 'https://www.manualslib.com/products/Casio-Rft-100-8702313.html'),
+  polar: L('Polar H10 (the5krunner)', 'https://the5krunner.com/specs/polar/h10/'),
+};
+
+/* The 22 parts of the OS HubTime and what the bench collects for each. `ref` is the value already known (sheet or research). */
+const PARTS = [
+  { id: '01', nome: 'Anel de Vedação', o: 'O-ring do fundo', p: 2,
+    reqs: ['Foto sobre papel milimetrado', 'Formato da seção (redonda ou plana)'],
+    meds: [['dint', 'Ø interno', ''], ['dext', 'Ø externo', ''], ['secao', 'Seção (espessura)', '']],
+    src: ['oring'], dica: 'Peças de estoque servem. Medir com o anel solto, sem esticar.' },
+  { id: '02', nome: 'Aro / Bezel', o: 'Aro giratório com inserto', p: 2,
+    reqs: ['Corte do perfil (degraus e chanfros)', 'Contagem de dentes da borda', 'Foto do inserto de frente'],
+    meds: [['dext', 'Ø externo', '42 (sheet)'], ['alt', 'Altura', '2,0 (sheet)'], ['dentes', 'Dentes na borda', ''], ['ins', 'Inserto: Ø int / Ø ext', ''], ['incl', 'Inserto: espessura int / ext', '1,4 / 1,0 (pesquisa)']],
+    src: ['insert', 'bezel'], dica: 'O corte do bezel pode sair junto com o corte lateral da cabeça (peça 04).' },
+  { id: '03', nome: 'Botão / Pulsador', o: 'Pulsadores às 2h e 4h', p: 2,
+    reqs: ['Perfil lateral do pulsador', 'Posição angular na caixa'],
+    meds: [['d', 'Ø do pulsador', ''], ['exp', 'Comprimento exposto', ''], ['ang', 'Ângulo em relação às 3h', '±30° (atual)']],
+    src: ['vk63'], dica: 'Usar um cronógrafo VK63 ou similar da bancada.' },
+  { id: '04', nome: 'Caixa', o: 'Caixa com alças', p: 1,
+    reqs: ['Contorno visto de cima (caixa + alças, sem bezel)', 'Corte lateral da cabeça (meia seção 12h–6h)', 'Mapa de acabamento: polido, escovado e direção', 'Furo da barra de mola: posição'],
+    meds: [['d', 'Ø da caixa', '42 (sheet)'], ['l2l', 'Alça a alça', '48 (sheet)'], ['asas', 'Largura entre asas', '20 (sheet)'], ['esp', 'Espessura total', '12,5 (sheet)'], ['furo', 'Ø do furo da barra', '']],
+    src: ['skx', 'liwCase', 'shm'], dica: 'É a referência que mais muda o 3D. O corte lateral alimenta também bezel, vidro, mostrador, fundo e juntas.' },
+  { id: '05', nome: 'Capa da Caixa / Proteção de Resina', o: 'Capa de resina (bumper)', p: 2,
+    reqs: ['Contorno visto de cima', 'Corte da parede', 'Recortes para coroa e botões'],
+    meds: [['esp', 'Espessura da parede', ''], ['alt', 'Altura', ''], ['dext', 'Ø externo', '']],
+    src: ['gshock'], dica: 'Usar o relógio-base de resina (ana-digi ou digital).' },
+  { id: '06', nome: 'Cinta (Monitor Cardíaco / Sensor)', o: 'Cinta peitoral com sensor', p: 3,
+    reqs: ['Foto do sensor e dos conectores', 'Largura da faixa'],
+    meds: [['sensor', 'Sensor (alt × larg × esp)', '34 × 65 × 10 (Polar H10)'], ['faixa', 'Largura da faixa', '']],
+    src: ['polar'], dica: 'Se não houver na bancada, os dados da Polar H10 já bastam.' },
+  { id: '07', nome: 'Coroa', o: 'Coroa e tubo', p: 2,
+    reqs: ['Perfil lateral com tubo', 'Contagem de estrias', 'Foto da ponta (logo ou relevo)'],
+    meds: [['d', 'Ø da coroa', '6,5 (sheet)'], ['esp', 'Espessura', '4,0 (pesquisa)'], ['estrias', 'Número de estrias', ''], ['tubo', 'Tubo: rosca / liso', '4,0 / 2,7 (pesquisa)']],
+    src: ['crown'], dica: 'Rosca mais comum para 6,5 mm: tap 10 (0,90 mm).' },
+  { id: '08', nome: 'Display LCD / LED', o: 'Janela LCD no mostrador', p: 2,
+    reqs: ['Foto do LCD de frente (com e sem dígitos acesos)', 'Moldura: perfil'],
+    meds: [['jan', 'Janela (larg × alt)', '9 × 4,4 (atual)'], ['pos', 'Distância do centro', '7,6 (atual)']],
+    src: ['casioRft', 'gshock'], dica: 'Fotografar com luz rasante para ver os segmentos apagados.' },
+  { id: '09', nome: 'Fecho / Fivela', o: 'Fecho dobrável (aço) e fivela (couro)', p: 2,
+    reqs: ['Fecho: vista de cima e de lado', 'Fivela: vista de cima e de lado', 'Foto do fecho aberto'],
+    meds: [['fecho', 'Fecho (comp × larg × esp)', ''], ['fivela', 'Largura da fivela', '18 (pesquisa)']],
+    src: ['clasp', 'strapcode'], dica: 'A patente US8739369 mostra o fecho de mergulho em vistas ortográficas.' },
+  { id: '10', nome: 'Fundo / Tampa Traseira', o: 'Fundo rosqueado', p: 2,
+    reqs: ['Corte do perfil', 'Foto das gravações', 'Entalhes de abertura: quantidade'],
+    meds: [['d', 'Ø', '35 (atual)'], ['esp', 'Espessura', '1,5 (atual)'], ['entalhes', 'Entalhes', '']],
+    src: ['skx'], dica: 'Sai do corte lateral da cabeça (peça 04).' },
+  { id: '11', nome: 'Índex / Pedras / Strass', o: 'Índices aplicados', p: 2,
+    reqs: ['Formato visto de cima', 'Corte do chanfro', 'Altura sobre o mostrador'],
+    meds: [['dim', 'Índice (comp × larg)', '3,8 × 1,3 (atual)'], ['alt', 'Altura', '0,5 (atual)']],
+    src: [], dica: 'Fotografar com lupa ou macro, com régua ao lado.' },
+  { id: '12', nome: 'Junta de Vedação', o: 'Junta do vidro', p: 2,
+    reqs: ['Perfil (L ou I)', 'Foto sobre papel milimetrado'],
+    meds: [['d', 'Ø', ''], ['alt', 'Altura', '0,8 ou 1,2 (I Hytrel)']],
+    src: ['gasket'], dica: 'Peças de estoque servem.' },
+  { id: '13', nome: 'Máquina (Movimento Analógico/Mecânico)', o: 'Movimento', p: 2,
+    reqs: ['Foto de frente e de trás', 'Posição da tige'],
+    meds: [['d', 'Ø', '27,40 (NH35)'], ['alt', 'Altura', '5,32 (NH35)'], ['enc', 'Ø de encaixe', '29,36 (NH35)']],
+    src: ['nh35', 'nh35cc', 'vk63'], dica: 'A ficha oficial da NH35 já traz o desenho com as medidas.' },
+  { id: '14', nome: 'Módulo (Circuito Digital)', o: 'Placa do módulo digital', p: 2,
+    reqs: ['Foto da placa dos dois lados', 'Posição da bateria e dos contatos'],
+    meds: [['d', 'Dimensões da placa', ''], ['esp', 'Espessura', ''], ['bat', 'Bateria (modelo)', '']],
+    src: ['casioRft'], dica: 'O manual de serviço RFT-100 mostra vista explodida e lista de peças do módulo.' },
+  { id: '15', nome: 'Mostrador', o: 'Mostrador sunburst', p: 2,
+    reqs: ['Foto de frente com luz difusa', 'Foto com luz rasante (sunburst)', 'Posição dos pés'],
+    meds: [['d', 'Ø', '31,2 (atual)'], ['esp', 'Espessura', '0,4 (atual)']],
+    src: ['nh35'], dica: 'A foto com luz rasante é a referência para o efeito sunburst.' },
+  { id: '16', nome: 'Passador da Pulseira', o: 'Passador de couro ou borracha', p: 3,
+    reqs: ['Foto de frente e de lado'],
+    meds: [['dim', 'Larg × alt × esp', '']],
+    src: [], dica: 'Pulseira de couro do estoque.' },
+  { id: '17', nome: 'Pinos / Tubos da Pulseira', o: 'Barras de mola e pinos de elo', p: 2,
+    reqs: ['Foto da barra de mola e do pino de elo'],
+    meds: [['corpo', 'Ø do corpo', '1,5 ou 1,8 (pesquisa)'], ['ponta', 'Ø da ponta', '0,7–0,9 (pesquisa)'], ['comp', 'Comprimento', '20 (entre asas)']],
+    src: ['springbar'], dica: 'Comprimento = largura entre asas.' },
+  { id: '18', nome: 'Ponteiros', o: 'Hora, minuto e segundo', p: 1,
+    reqs: ['Formato de cada ponteiro visto de cima', 'Corte mostrando a aresta (facetado)', 'Canal do lume'],
+    meds: [['hora', 'Hora: comprimento', ''], ['min', 'Minuto: comprimento', ''], ['seg', 'Segundo: comprimento', ''], ['furos', 'Furos (h / m / s)', '1,5 / 0,89 / 0,21 (NH35)']],
+    src: ['nh35cc'], dica: 'Anúncios divergem: medir na bancada com os ponteiros soltos.' },
+  { id: '19', nome: 'Pulseira', o: 'Elos de aço e pulseira de couro', p: 1,
+    reqs: ['Elo visto de cima', 'Corte transversal do elo', 'Passo entre elos', 'Mapa de acabamento (centro polido, laterais escovadas)'],
+    meds: [['larg', 'Largura', '20 (sheet)'], ['esp', 'Espessura', '3,5 (sheet)'], ['passo', 'Passo do elo', '7 (atual)'], ['comp', 'Comprimento aberta', '180 (sheet)']],
+    src: ['strapcode', 'strapcodeLiw'], dica: 'Basta desenhar 1 elo; o 3D repete.' },
+  { id: '20', nome: 'Terminal / End Link', o: 'Terminal entre alça e pulseira', p: 2,
+    reqs: ['Vista de cima', 'Vista de lado (encaixe na caixa)'],
+    meds: [['dim', 'Comp × larg × esp', '']],
+    src: ['strapcodeLiw'], dica: 'Fotografar encaixado e solto.' },
+  { id: '21', nome: 'Tige', o: 'Haste da coroa', p: 2,
+    reqs: ['Foto sobre papel milimetrado'],
+    meds: [['comp', 'Comprimento', ''], ['d', 'Ø', '0,90 (tap 10)'], ['peca', 'Código da peça', '351-200 (NH35)']],
+    src: ['nh35cc'], dica: 'Peça de estoque serve.' },
+  { id: '22', nome: 'Vidro / Visor', o: 'Vidro de safira', p: 1,
+    reqs: ['Perfil (plano, domo simples ou duplo)', 'Tratamento antirreflexo: sim ou não'],
+    meds: [['d', 'Ø', '31,5 (SKX)'], ['esp', 'Espessura', '1,8 (sheet)']],
+    src: ['crystal', 'skx'], dica: 'Sai do corte lateral da cabeça (peça 04).' },
+];
+const GERAL = { id: 'geral', nome: 'Entregas gerais', o: 'Valem para o relógio todo', p: 1,
+  reqs: ['Escolher os 2 relógios-base (aço e resina)', 'Mapa de acabamento do relógio inteiro', '3 a 5 fotos de referência de luz, reflexo e cor', 'Paleta final: azul, tom do aço e fundo da tela'],
+  meds: [], src: [], dica: 'O mapa de acabamento faz mais diferença no realismo do que qualquer aumento de detalhe.' };
+const ALL = [GERAL, ...PARTS];
+
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'text') n.textContent = v; else if (k === 'class') n.className = v; else n.setAttribute(k, v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+};
+const STATUS = { pendente: 'Pendente', 'em-coleta': 'Em coleta', concluido: 'Concluída' };
+
+let db = null, user = null, readOnly = false;
+const docs = {};          // id -> last stored body
+const queues = {};        // id -> write chain (one write at a time per doc)
+
+function card(part) {
+  const d = el('details', { class: 'part', id: 'part-' + part.id });
+  d.dataset.p = part.p;
+  const pills = el('span', { class: 'pills' },
+    el('span', { class: 'pill' + (part.p === 1 ? ' p1' : ''), text: 'P' + part.p }),
+    el('span', { class: 'pill', 'data-status': 'pendente', 'data-role': 'status', text: STATUS.pendente }));
+  d.append(el('summary', {},
+    el('span', { class: 'pid', text: part.id === 'geral' ? '—' : part.id }),
+    el('span', { class: 'ptitle' }, el('b', { text: part.nome }), el('span', { text: part.o })),
+    pills));
+
+  const body = el('div', { class: 'body' });
+  const reqCol = el('div', { class: 'col' }, el('h3', { text: 'Referências a coletar' }));
+  part.reqs.forEach((r, i) => {
+    const id = `${part.id}-r${i}`;
+    const cb = el('input', { type: 'checkbox', id, class: 'writable', 'data-req': String(i) });
+    cb.addEventListener('change', () => save(part.id));
+    reqCol.append(el('label', { class: 'check', for: id }, cb, el('span', { text: r })));
+  });
+  body.append(reqCol);
+
+  const side = el('div', { class: 'col' });
+  if (part.meds.length) {
+    side.append(el('h3', { text: 'Medidas (mm)' }));
+    const grid = el('div', { class: 'meas' });
+    for (const [k, label, ref] of part.meds) {
+      const id = `${part.id}-m-${k}`;
+      const inp = el('input', { id, class: 'writable', inputmode: 'decimal', 'data-med': k, placeholder: '—', autocomplete: 'off' });
+      inp.addEventListener('change', () => save(part.id));
+      grid.append(el('label', { for: id, text: label }), inp);
+      if (ref) grid.append(el('small', { text: 'Referência: ' + ref }));
+    }
+    side.append(grid);
+  }
+  if (part.src.length) {
+    side.append(el('h3', { text: 'Fontes sugeridas' }));
+    const ul = el('ul', { class: 'sources' });
+    for (const k of part.src) ul.append(el('li', {}, el('a', { href: SRC[k].u, target: '_blank', rel: 'noopener', text: SRC[k].t })));
+    ul.append(el('li', { text: T.BANCADA }));
+    side.append(ul);
+  }
+  body.append(side);
+
+  const foot = el('div', { class: 'col full' });
+  if (part.dica) foot.append(el('p', { class: 'tip', text: part.dica }));
+  const notesId = part.id + '-notas';
+  const notes = el('textarea', { id: notesId, class: 'writable', 'data-role': 'notas', placeholder: 'Observações, links de fotos, quem tem a peça na bancada…' });
+  notes.addEventListener('change', () => save(part.id));
+  foot.append(el('label', { for: notesId, class: 'eyebrow', text: 'Anotações' }), notes);
+  const sel = el('select', { id: part.id + '-status', class: 'writable', 'data-role': 'select', 'aria-label': 'Status da peça ' + part.nome });
+  for (const [v, t] of Object.entries(STATUS)) sel.append(el('option', { value: v, text: t }));
+  sel.addEventListener('change', () => save(part.id));
+  foot.append(el('div', { class: 'row' }, el('span', { class: 'meta', 'data-role': 'meta', text: 'Sem registros ainda.' }), sel));
+  body.append(foot);
+  d.append(body);
+  return d;
+}
+
+function collect(id) {
+  const c = $('#part-' + id);
+  const checks = {}, medidas = {};
+  c.querySelectorAll('[data-req]').forEach((cb) => { checks[cb.dataset.req] = cb.checked; });
+  c.querySelectorAll('[data-med]').forEach((inp) => { medidas[inp.dataset.med] = inp.value.trim(); });
+  return { checks, medidas, notas: $('[data-role="notas"]', c).value, status: $('[data-role="select"]', c).value };
+}
+
+function setState(text, tone) { const s = $('#save-state'); s.textContent = text; s.dataset.tone = tone || ''; }
+
+async function save(id) {
+  paintStatus(id, $('[data-role="select"]', $('#part-' + id)).value);
+  refreshSummary();
+  if (!db || readOnly) return;
+  const body = { ...collect(id), atualizadoPor: user ? await user.id() : null, atualizadoEm: new Date().toISOString() };
+  setState('Salvando…');
+  queues[id] = (queues[id] || Promise.resolve())
+    .then(() => db.doc('checklist/' + id).set(body))
+    .then(() => setState('Tudo salvo para a equipe.'))
+    .catch((e) => {
+      if (e && e.code === 'invalid_argument') { goReadOnly('Você pode ver o checklist, mas não editar. Peça acesso de Contributor ao dono.'); }
+      else setState('Não foi possível salvar agora. Tente de novo em instantes.', 'warn');
+    });
+}
+
+function paintStatus(id, status) {
+  const pill = $('[data-role="status"]', $('#part-' + id));
+  pill.dataset.status = status; pill.textContent = STATUS[status] || STATUS.pendente;
+}
+
+async function applyDoc(id, data) {
+  const c = $('#part-' + id); if (!c || !data) return;
+  docs[id] = data;
+  const active = document.activeElement;
+  c.querySelectorAll('[data-req]').forEach((cb) => { cb.checked = !!(data.checks || {})[cb.dataset.req]; });
+  c.querySelectorAll('[data-med]').forEach((inp) => { if (inp !== active) inp.value = (data.medidas || {})[inp.dataset.med] || ''; });
+  const notes = $('[data-role="notas"]', c); if (notes !== active) notes.value = data.notas || '';
+  const sel = $('[data-role="select"]', c); sel.value = STATUS[data.status] ? data.status : 'pendente';
+  paintStatus(id, sel.value);
+  const meta = $('[data-role="meta"]', c);
+  let who = '';
+  if (user && data.atualizadoPor) { const ps = await user.profiles([data.atualizadoPor]); who = ps[data.atualizadoPor].name || 'alguém da equipe'; }
+  const when = data.atualizadoEm ? new Date(data.atualizadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  meta.textContent = when ? `Atualizado ${who ? 'por ' + who + ' ' : ''}em ${when}` : 'Sem registros ainda.';
+}
+
+function refreshSummary() {
+  let done = 0, doing = 0, p1 = 0;
+  for (const p of PARTS) {
+    const s = $('[data-role="select"]', $('#part-' + p.id)).value;
+    if (s === 'concluido') { done++; if (p.p === 1) p1++; } else if (s === 'em-coleta') doing++;
+  }
+  $('#c-done').textContent = done; $('#c-doing').textContent = doing; $('#c-todo').textContent = PARTS.length - done - doing;
+  $('#c-p1').textContent = `${p1}/${PARTS.filter((p) => p.p === 1).length}`;
+  $('#bar').style.width = (done / PARTS.length * 100) + '%';
+  $('.bar').setAttribute('aria-valuenow', String(done));
+  applyFilter();
+}
+
+let filter = 'all';
+function applyFilter() {
+  const q = $('#q').value.trim().toLowerCase();
+  let shown = 0;
+  for (const p of ALL) {
+    const c = $('#part-' + p.id);
+    const status = $('[data-role="select"]', c).value;
+    const okF = filter === 'all' || (filter === 'open' ? status !== 'concluido' : String(p.p) === filter);
+    const okQ = !q || p.id.includes(q) || p.nome.toLowerCase().includes(q) || p.o.toLowerCase().includes(q);
+    c.hidden = !(okF && okQ); if (!c.hidden) shown++;
+  }
+  $('#no-match').hidden = shown > 0;
+}
+
+function goReadOnly(msg) { readOnly = true; $('#app').classList.add('ro'); setState(msg, 'warn'); }
+
+const list = $('#parts');
+for (const p of ALL) list.append(card(p));
+$('#part-geral').open = true;
+document.querySelectorAll('.chip').forEach((b) => b.addEventListener('click', () => {
+  filter = b.dataset.filter;
+  document.querySelectorAll('.chip').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  applyFilter();
+}));
+$('#q').addEventListener('input', applyFilter);
+refreshSummary();
+
+(async () => {
+  const cl = window.claude;
+  if (!cl || !cl.use) { setState('Modo leitura: abra pelo link do Claude para salvar o progresso.', 'warn'); return; }
+  [db, user] = await Promise.all([cl.use('db'), cl.use('user')]);
+  if (!db) { goReadOnly('Modo leitura: o registro compartilhado não está disponível nesta visualização.'); return; }
+  if (user) { const can = await user.can('data.write'); if (can === false) goReadOnly('Você pode ver o checklist, mas não editar. Peça acesso de Contributor ao dono.'); }
+  if (!readOnly) setState('Conectado. As marcações ficam salvas para a equipe.');
+  db.collection('checklist').onSnapshot(async (snap) => {
+    for (const d of snap.docs) if (d.exists) await applyDoc(d.id, d.data());
+    refreshSummary();
+  }, () => setState('A conexão com o registro caiu. Recarregue a página.', 'warn'));
+})();
+</script>
