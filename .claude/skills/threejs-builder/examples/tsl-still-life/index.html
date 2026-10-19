@@ -1,0 +1,302 @@
+<title>Still Life, Procedural</title>
+<style>
+/* Layout: full-bleed WebGPU canvas; a small caption card bottom-left with a reroll button. */
+:root {
+  --paper: #e9e2d6; --ink: #2a241d; --muted: #6f6556; --line: rgba(42, 36, 29, .18);
+  --serif: "Newsreader", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+html, body { height: 100%; }
+body { margin: 0; background: #b9ae9e; color: var(--ink); overflow: hidden; }
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.2s ease; touch-action: none; }
+body.ready #gl { opacity: 1; }
+.card { position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(340px, calc(100% - 32px));
+  background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(10px); padding: 16px 18px; display: grid; gap: 10px; border-radius: 2px; }
+.card h1 { margin: 0; font: italic 400 26px/1.1 var(--serif); letter-spacing: -.005em; }
+.card p { margin: 0; font: 400 15px/1.45 var(--serif); color: var(--muted); }
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+button { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--paper); background: var(--ink); border: 0; padding: 9px 12px; cursor: pointer; border-radius: 2px; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+#fail { position: fixed; inset: 0; display: grid; place-items: center; font: 16px var(--serif); }
+@media (max-width: 600px) { .card h1 { font-size: 22px; } .card p { font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { #gl { transition: none; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<canvas id="gl" aria-label="A still life on a walnut table: a celadon stoneware bottle, a marble sphere and a hammered brass bowl in warm window light."></canvas>
+<div id="boot" style="position:fixed;inset:0;display:grid;place-items:center;pointer-events:none"></div>
+<section class="card">
+  <h1>Still Life, Procedural</h1>
+  <p>Walnut, marble, celadon stoneware and hammered brass. Every surface is computed in the shader; the page loads no image textures.</p>
+  <div class="meta"><span id="meta">seed 0001</span><button id="reroll" type="button">Reroll surfaces</button></div>
+</section>
+
+<script>
+// Boot guard (classic script, runs even if the module graph fails): surface errors instead of an endless loader.
+(() => {
+  const errs = [];
+  const show = msg => { const b = document.getElementById('boot'); if (!b || document.body.classList.contains('ready')) return;
+    b.innerHTML = '<p style="max-width:42ch;padding:0 16px;font:14px/1.5 system-ui;text-align:center">The 3D scene could not start.<br><small style="opacity:.7">' + msg.replace(/[<>&]/g, '') + '</small></p>'; };
+  addEventListener('error', e => { errs.push((e.message || (e.target && e.target.src) || 'load error')); show(errs.at(-1)); }, true);
+  addEventListener('unhandledrejection', e => { errs.push(String(e.reason && e.reason.message || e.reason)); show(errs.at(-1)); });
+  setTimeout(() => { if (!document.body.classList.contains('ready')) show(errs.at(-1) || 'Timed out while loading assets.'); }, 20000);
+  window.__bootErrors = errs;
+})();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.js",
+  "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.js",
+  "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.tsl.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three/webgpu';
+import { Fn, uniform, float, vec2, vec3, color, mix, smoothstep, step, abs, sin, pow, clamp, length, atan, fract,
+  positionLocal, positionView, normalView, faceDirection, screenUV, pass, mrt, sample, packNormalToRGB, unpackRGBToNormal,
+  builtinAOContext, mx_fractal_noise_float, mx_worley_noise_float, mx_noise_float, mx_cell_noise_float } from 'three/tsl';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { WoodNodeMaterial } from 'three/addons/materials/WoodNodeMaterial.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { ssao } from 'three/addons/tsl/display/SSAONode.js';
+import { dof } from 'three/addons/tsl/display/DepthOfFieldNode.js';
+import { film } from 'three/addons/tsl/display/FilmNode.js';
+
+const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const canvas = document.getElementById('gl');
+// Falls back to WebGL 2 when WebGPU is missing; '#webgl' forces the fallback so it can be tested (preview.py --page index.html#webgl)
+const renderer = new THREE.WebGPURenderer({ canvas, antialias: false, forceWebGL: location.hash === '#webgl' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2));
+renderer.toneMapping = THREE.AgXToneMapping;      // filmic roll-off for the bright window patches
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+try { await renderer.init(); } catch (e) {
+  document.body.insertAdjacentHTML('beforeend', '<div id="fail">This scene needs WebGPU or WebGL 2.</div>'); throw e;
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#b9ae9e');
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 20);
+
+// ── Shared uniforms: one seed drives every procedural surface
+const uSeed = uniform(1);
+const uGlaze = uniform(new THREE.Color('#6f9486'));
+const uDrip = uniform(0.42);
+
+// Bump from any procedural height (world units), via screen-space derivatives (Mikkelsen 2010).
+// TSL's bumpMap() differentiates a texture through its UVs, so it can't take a position-based noise.
+const bumpNormal = Fn(([h]) => {
+  const dpdx = positionView.dFdx(), dpdy = positionView.dFdy();
+  const r1 = dpdy.cross(normalView), r2 = normalView.cross(dpdx);
+  const det = dpdx.dot(r1).mul(faceDirection);
+  const grad = det.sign().mul(h.dFdx().mul(r1).add(h.dFdy().mul(r2)));
+  return det.abs().mul(normalView).sub(grad).normalize();
+});
+
+// ── Wall: lime plaster. Low-frequency mottling + trowel marks + fine grain in the bump
+const wallMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.95 });
+{
+  const p = positionLocal.mul(1.0);
+  const mottle = mx_fractal_noise_float(p.mul(1.4).add(vec3(uSeed, 0, 0)), 4, 2, 0.5).mul(0.5).add(0.5);
+  wallMat.colorNode = mix(color('#cfc4b4'), color('#e2d9cb'), mottle);
+  const trowel = mx_noise_float(p.mul(vec3(3, 7, 1)).add(uSeed)).mul(0.0006);
+  const grain = mx_noise_float(p.mul(90)).mul(0.00012);
+  wallMat.normalNode = bumpNormal(trowel.add(grain));
+}
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(8, 5), wallMat);
+wall.position.set(0, 1.6, -0.75);
+wall.receiveShadow = true;
+scene.add(wall);
+
+// ── Table: procedural walnut, bevelled slab.
+// WoodNodeMaterial (r186) only compiles on the WebGPU backend — on the WebGL 2 fallback it throws and renders black —
+// so the fallback gets a lighter TSL walnut built from MaterialX noise (works on both backends).
+function tslWalnut() {
+  const m = new THREE.MeshPhysicalNodeMaterial({ clearcoat: 0.25, clearcoatRoughness: 0.45 });
+  const p = positionLocal.mul(vec3(1.2, 9, 9)).add(vec3(0, 31, 7));            // log axis along X, offset → flat-sawn figure
+  const warp = mx_fractal_noise_float(p.mul(vec3(0.35, 0.6, 0.6)), 4, 2, 0.5).mul(1.8);
+  const ring = fract(length(p.yz).add(warp));
+  const late = smoothstep(0.35, 1.0, ring);                                      // latewood band, soft ramp
+  const fiber = mx_noise_float(positionLocal.mul(vec3(4, 120, 120))).mul(0.5).add(0.5);
+  const tone = mx_fractal_noise_float(positionLocal.mul(1.5), 2, 2, 0.5).mul(0.5).add(0.5);
+  m.colorNode = mix(mix(color('#7c5236'), color('#5e3b25'), tone), color('#3a2416'), late.mul(0.5).add(fiber.mul(0.15)));
+  m.roughnessNode = float(0.42).add(late.mul(0.12)).add(fiber.mul(0.08));
+  m.normalNode = bumpNormal(fiber.mul(0.00015).add(late.mul(0.0002)));
+  return m;
+}
+const wood = renderer.backend.isWebGPUBackend ? WoodNodeMaterial.fromPreset('walnut', 'semigloss') : tslWalnut();
+// The wood volume's grain runs across local Z by default: rotate 90° on Y so it runs along the table, scale >1 = finer figure
+if ('transformationMatrix' in wood) wood.transformationMatrix = new THREE.Matrix4().makeRotationY(Math.PI / 2).premultiply(new THREE.Matrix4().makeScale(7, 7, 7)).setPosition(0.3, 0, 2.5);
+const table = new THREE.Mesh(new RoundedBoxGeometry(3.4, 0.08, 2.6, 6, 0.012), wood);   // deep enough that its front edge stays out of frame
+table.position.set(0, -0.04, 0.55);
+table.receiveShadow = true;
+scene.add(table);
+
+// ── Stoneware bottle: raw clay foot, celadon glaze with a noisy drip line, iron speckles, throwing rings
+const H = 0.46;
+const bottleProfile = [[0, 0], [0.072, 0], [0.086, 0.006], [0.094, 0.03], [0.108, 0.1], [0.112, 0.17], [0.1, 0.24], [0.07, 0.3],
+  [0.036, 0.345], [0.026, 0.39], [0.027, 0.44], [0.034, 0.458], [0.031, 0.462], [0.022, 0.452], [0.02, 0.4]].map(([x, y]) => new THREE.Vector2(x, y));
+const bottleMat = new THREE.MeshPhysicalNodeMaterial();
+{
+  const p = positionLocal;
+  const ang = atan(p.z, p.x);
+  const h = p.y.div(H);
+  const edge = uDrip.add(mx_fractal_noise_float(vec3(ang.mul(1.6), p.y.mul(4), uSeed), 3, 2, 0.5).mul(0.05)).add(sin(ang.mul(9).add(uSeed)).mul(0.012));
+  const glazed = smoothstep(edge.sub(0.006), edge.add(0.006), h);
+  const pool = smoothstep(edge.add(0.08), edge, h).mul(glazed);                      // glaze pools darker at the drip line
+  const cellP = p.mul(70).add(uSeed.mul(3.1));
+  const speck = smoothstep(0.17, 0.07, mx_worley_noise_float(cellP)).mul(step(0.62, mx_cell_noise_float(cellP.floor())));
+  const clay = mix(color('#a8714c'), color('#c2906a'), mx_noise_float(p.mul(30)).mul(0.5).add(0.5));
+  const glazeCol = mix(uGlaze, uGlaze.mul(0.55), pool).mul(mx_noise_float(p.mul(9).add(uSeed)).mul(0.06).add(1));
+  bottleMat.colorNode = mix(clay, glazeCol, glazed).mul(speck.mul(-0.65).add(1));
+  bottleMat.roughnessNode = mix(float(0.82), float(0.16), glazed).add(speck.mul(0.2));
+  bottleMat.clearcoatNode = glazed.mul(0.6);
+  bottleMat.clearcoatRoughnessNode = float(0.12);
+  const rings = sin(p.y.mul(260)).mul(0.00025);                                        // wheel-thrown ridges
+  const grit = mx_noise_float(p.mul(160)).mul(0.0003).mul(glazed.oneMinus());
+  bottleMat.normalNode = bumpNormal(rings.add(grit).add(pool.mul(0.0008)));
+}
+const bottle = new THREE.Mesh(new THREE.LatheGeometry(new THREE.SplineCurve(bottleProfile).getPoints(140), 128), bottleMat);
+bottle.position.set(-0.2, 0, -0.18);
+bottle.castShadow = bottle.receiveShadow = true;
+scene.add(bottle);
+
+// ── Marble sphere: domain-warped veins, polished with micro-variation in gloss
+const marbleMat = new THREE.MeshPhysicalNodeMaterial({ clearcoat: 0.5, clearcoatRoughness: 0.08 });
+{
+  const q = positionLocal.mul(6).add(vec3(uSeed.mul(1.7), 0, uSeed));
+  const warp = mx_fractal_noise_float(q.mul(0.45), 6, 2, 0.5).mul(3.2);            // low-frequency warp = long flowing veins
+  const v = abs(sin(q.x.mul(0.8).add(q.y.mul(0.35)).add(warp)));
+  const vein = pow(v.oneMinus(), 16);                                                 // thin main veins
+  const halo = pow(v.oneMinus(), 4).mul(0.45);                                        // soft cloud around them
+  const v2 = pow(abs(sin(q.z.mul(1.1).add(warp.mul(1.4)))).oneMinus(), 60).mul(0.45);// faint secondary veins
+  const cloud = mx_fractal_noise_float(q.mul(0.3), 3, 2, 0.5).mul(0.5).add(0.5);
+  marbleMat.colorNode = mix(mix(color('#f1eee8'), color('#dcd8d1'), cloud), color('#6a6d72'), clamp(vein.add(v2).add(halo), 0, 0.9));
+  marbleMat.roughnessNode = float(0.08).add(vein.mul(0.1)).add(mx_noise_float(q.mul(3)).mul(0.03));
+}
+const marble = new THREE.Mesh(new THREE.SphereGeometry(0.065, 96, 64), marbleMat);
+marble.position.set(0.38, 0.065, 0.2);
+marble.castShadow = marble.receiveShadow = true;
+scene.add(marble);
+
+// ── Hammered brass bowl: worley dents as height, darker patina in the hollows
+const bowlProfile = [[0, 0.004], [0.05, 0], [0.11, 0.012], [0.16, 0.04], [0.19, 0.075], [0.196, 0.082], [0.188, 0.083], [0.18, 0.074], [0.152, 0.044], [0.105, 0.02], [0.05, 0.012], [0, 0.014]]
+  .map(([x, y]) => new THREE.Vector2(x, y));
+const brassMat = new THREE.MeshPhysicalNodeMaterial({ metalness: 1, side: THREE.DoubleSide });
+{
+  const p = positionLocal.mul(70).add(uSeed);
+  const dent = mx_worley_noise_float(p);
+  const height = dent.mul(dent).mul(0.0005);
+  const patina = smoothstep(0.25, 0.0, dent).mul(0.6);
+  brassMat.colorNode = mix(color('#d8b56a'), color('#8a6a34'), patina.mul(0.5)).mul(mx_noise_float(positionLocal.mul(12)).mul(0.08).add(1));
+  brassMat.roughnessNode = float(0.22).add(patina.mul(0.18)).add(mx_noise_float(positionLocal.mul(40)).mul(0.04));
+  brassMat.normalNode = bumpNormal(height);
+}
+const bowl = new THREE.Mesh(new THREE.LatheGeometry(bowlProfile, 128), brassMat);
+bowl.position.set(0.12, 0, 0.16);
+bowl.castShadow = bowl.receiveShadow = true;
+scene.add(bowl);
+
+// ── Light: warm low sun through a window (gobo) + cool skylight fill → warm/cool contrast
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.22;
+scene.add(new THREE.HemisphereLight('#aebdd3', '#5d4a3a', 0.9));
+const sunDir = new THREE.Vector3(-1.0, 0.72, 0.62).normalize();
+const sun = new THREE.DirectionalLight('#ffd3a0', 5.2);
+sun.position.copy(sunDir).multiplyScalar(5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(MOBILE ? 2048 : 4096, MOBILE ? 2048 : 4096);
+Object.assign(sun.shadow.camera, { left: -2.4, right: 2.4, top: 2.2, bottom: -2.2, near: 0.5, far: 10 });
+sun.shadow.normalBias = 0.01; sun.shadow.radius = 3; sun.shadow.bias = -0.0002;
+scene.add(sun);
+// Window frame that only exists in the shadow pass: 2×2 panes cut out of a big blocker
+const win = new THREE.Shape();
+win.moveTo(-4, -4); win.lineTo(4, -4); win.lineTo(4, 4); win.lineTo(-4, 4); win.lineTo(-4, -4);
+const pw = 0.78, ph = 1.05, mull = 0.045;
+for (const [cx, cy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+  const x0 = cx < 0 ? -pw - mull / 2 : mull / 2, y0 = cy < 0 ? -ph - mull / 2 : mull / 2;
+  const hole = new THREE.Path(); hole.moveTo(x0, y0); hole.lineTo(x0, y0 + ph); hole.lineTo(x0 + pw, y0 + ph); hole.lineTo(x0 + pw, y0); hole.lineTo(x0, y0);
+  win.holes.push(hole);
+}
+const gobo = new THREE.Mesh(new THREE.ShapeGeometry(win), new THREE.MeshBasicNodeMaterial({ colorWrite: false, depthWrite: false, side: THREE.DoubleSide }));
+// Aim the mullion cross at a wall point behind the group: the blocker sits on the sun ray through that point
+const crossOnWall = new THREE.Vector3(-0.05, 0.62, -0.75);
+gobo.position.copy(sunDir).multiplyScalar(2.8).add(crossOnWall);
+gobo.lookAt(gobo.position.clone().sub(sunDir));
+gobo.castShadow = true;
+scene.add(gobo);
+
+// ── Post: SSAO into the ambient term (+MSAA), then depth of field, vignette and film grain
+const pipeline = new THREE.RenderPipeline(renderer);
+const prePass = pass(scene, camera);
+prePass.transparent = false;
+prePass.setMRT(mrt({ output: packNormalToRGB(normalView) }));
+prePass.getTexture('output').type = THREE.UnsignedByteType;
+const preNormal = sample(uv => unpackRGBToNormal(prePass.getTextureNode().sample(uv)));
+const aoPass = ssao(prePass.getTextureNode('depth'), preNormal, camera);
+aoPass.radius.value = 0.12; aoPass.intensity.value = 1.1; aoPass.resolutionScale = MOBILE ? 0.5 : 0.75;
+const scenePass = pass(scene, camera, { samples: 4 });
+scenePass.contextNode = builtinAOContext(aoPass.getTextureNode().sample(screenUV).r);
+const uFocus = uniform(1.4), uFocal = uniform(0.7), uBokeh = uniform(MOBILE ? 0.8 : 1.1);
+const dofPass = dof(scenePass.getTextureNode(), scenePass.getViewZNode(), uFocus, uFocal, uBokeh);
+const vig = smoothstep(1.05, 0.25, length(screenUV.sub(0.5).mul(vec2(1.25, 1))));
+pipeline.outputNode = film(dofPass.mul(vig.mul(0.35).add(0.65)), float(0.18));
+
+// ── Camera: framed for the group; gentle parallax toward the pointer
+const target = new THREE.Vector3(0.08, 0.17, -0.02);
+const base = new THREE.Spherical().setFromVector3(new THREE.Vector3(0.62, 0.42, 1.62));
+let aimX = 0, aimY = 0, px = 0, py = 0;
+addEventListener('pointermove', e => { aimX = e.clientX / innerWidth - 0.5; aimY = e.clientY / innerHeight - 0.5; });
+function placeCamera() {
+  const s = base.clone();
+  s.theta += px * 0.12; s.phi += py * 0.05;
+  if (innerWidth < innerHeight) s.radius *= 1.75;   // portrait: pull back so the whole group fits the narrow frame
+  camera.position.setFromSpherical(s).add(target);
+  camera.lookAt(target);
+  uFocus.value = camera.position.distanceTo(bottle.position.clone().setY(0.2));
+}
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  if (innerWidth < innerHeight) camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight * 0.16, innerWidth, innerHeight);
+  else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+  placeCamera();
+}
+addEventListener('resize', resize);
+resize();
+
+// ── Reroll: new seed, glaze color and drip height
+const GLAZES = ['#6f9486', '#3e5b78', '#b8875a', '#8c3b2e', '#d9d2c0', '#2f3a33'];
+let seed = 1;
+function reroll(n) {
+  seed = n ?? Math.floor(Math.random() * 9999) + 1;
+  uSeed.value = seed * 0.137;
+  uGlaze.value.set(GLAZES[seed % GLAZES.length]);
+  uDrip.value = 0.3 + (seed % 7) / 7 * 0.25;
+  document.getElementById('meta').textContent = `seed ${String(seed).padStart(4, '0')} · ${renderer.backend.isWebGPUBackend ? 'WebGPU' : 'WebGL 2'}`;
+}
+document.getElementById('reroll').addEventListener('click', () => reroll());
+reroll(1);
+
+const timer = new THREE.Timer(); timer.connect(document);
+function tick(dt) {
+  const k = REDUCED ? 1 : 1 - Math.exp(-dt * 3);
+  px += (aimX - px) * k; py += (aimY - py) * k;
+  placeCamera();
+}
+await renderer.compileAsync(scene, camera);
+let frames = 0;
+renderer.setAnimationLoop(() => {
+  timer.update(); tick(Math.min(timer.getDelta(), 1 / 30));
+  pipeline.render();
+  if (++frames === 3) { document.body.classList.add('ready'); window.__app.ready = true; }
+});
+window.__app = { renderer, scene, camera, ready: false,
+  state: n => { const v = Number(n); if (v) reroll(v); } };
+</script>

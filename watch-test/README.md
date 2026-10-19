@@ -128,6 +128,9 @@ Medido no navegador de desenvolvimento (desktop, 1016 × 837 px, DPR 1, relógio
 - Assar oclusão (AO) na textura e desligar o N8AO.
 
 ## Referências e pontos de retorno
+- Passo a passo de implementação no HubTime: `../docs/IMPLEMENTACAO.md`.
+- Skills usadas: `../docs/SKILLS.md`.
+- Captura de renders: `scripts/capture-snippet.js` + `scripts/png-receiver.py`.
 - Pacote SVG (1:1, mm) gerado dos mesmos perfis: `../docs/referencias-3d/svg/`.
 - Checklist das 22 peças com fontes: `../docs/referencias-3d/index.html`.
 - Checkpoints de versão (tags git): `../docs/CHECKPOINTS.md`.

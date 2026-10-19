@@ -1,0 +1,276 @@
+<title>Product Hero</title>
+<!-- Reference scene. All copy, names, prices and colors are PLACEHOLDERS: replace them with the project's own. -->
+<style>
+/* Layout: full-bleed canvas; the camera's view offset pushes the shoe into the right 60% on desktop
+   and into the upper half on phones, so the copy column never covers the product. */
+:root {
+  --bd-1: #e4e7ee; --bd-2: #a9b1c2;   /* backdrop center / edge — swapped per colorway */
+  --ink: #12151c; --muted: #4c5363; --line: rgba(18, 21, 28, .14);
+  --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --body: "Geist", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--bd-2); color: var(--ink); font-family: var(--body); overflow: hidden; }
+#stage { position: fixed; inset: 0; background: radial-gradient(75% 85% at 66% 46%, var(--bd-1) 0%, var(--bd-2) 100%); transition: background .8s ease; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1s ease; touch-action: none; cursor: grab; outline: none; }
+#gl:active { cursor: grabbing; }
+body.ready #gl { opacity: 1; }
+.copy { position: fixed; left: clamp(16px, 6vw, 96px); top: 50%; transform: translateY(-50%); width: min(400px, 38vw); display: grid; gap: 22px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 0; font: 800 clamp(56px, 7.4vw, 112px)/.86 var(--display); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
+.lede { margin: 0; font-size: 16px; line-height: 1.55; color: var(--muted); max-width: 34ch; }
+.specs { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 4px 28px; font: 12px/1.4 var(--mono); color: var(--muted); padding-block: 14px; border-block: 1px solid var(--line); }
+.specs b { display: block; font: 600 15px/1.3 var(--mono); color: var(--ink); }
+.buy { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.price { font: 700 28px/1 var(--display); letter-spacing: .02em; }
+.swatches { display: flex; gap: 10px; }
+.swatches button { width: 34px; height: 34px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18), 0 0 0 0 var(--ink); transition: box-shadow .25s ease, transform .25s ease; }
+.swatches button[aria-pressed="true"] { box-shadow: inset 0 0 0 1px rgba(0,0,0,.18), 0 0 0 2px var(--bd-1), 0 0 0 3.5px var(--ink); }
+.swatches button:hover { transform: scale(1.08); }
+.swatches button:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.cw { font: 500 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); min-width: 10ch; }
+.hint { position: fixed; right: clamp(16px, 4vw, 48px); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); font: 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; }
+.hint a { color: inherit; }
+#boot { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; transition: opacity .6s ease; }
+body.ready #boot { opacity: 0; }
+#boot .bar { width: 180px; height: 2px; background: var(--line); }
+#boot i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .3s ease; }
+@media (max-width: 760px), (orientation: portrait) {
+  .copy { top: auto; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: none; width: auto; right: 16px; gap: 14px; }
+  h1 { font-size: clamp(44px, 13vw, 72px); }
+  .lede, .specs { display: none; }
+  .hint { top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; }
+  #stage { background: radial-gradient(90% 60% at 50% 34%, var(--bd-1) 0%, var(--bd-2) 100%); }
+}
+@media (prefers-reduced-motion: reduce) { #gl, #boot, #stage { transition: none; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500;600&display=swap">
+
+<div id="stage"><canvas id="gl" tabindex="0" aria-label="[Product name] on a pedestal. Drag to turn it; use the color buttons to switch colorways."></canvas></div>
+<main class="copy">
+  <span class="eyebrow">[Category · Collection]</span>
+  <h1>[Product name]</h1>
+  <p class="lede">[One-sentence product benefit taken from the project's copy.]</p>
+  <div class="specs"><span><b>[spec]</b>label</span><span><b>[spec]</b>label</span><span><b>[spec]</b>label</span></div>
+  <div class="buy">
+    <span class="price">[price]</span>
+    <div class="swatches" role="group" aria-label="Colorway">
+      <button data-v="midnight" aria-pressed="true" style="--c:linear-gradient(135deg,#1c6e9f 58%,#0f2f47 58%)" aria-label="Variant A"></button>
+      <button data-v="beach" aria-pressed="false" style="--c:linear-gradient(135deg,#c99393 58%,#8e5a5c 58%)" aria-label="Variant B"></button>
+      <button data-v="street" aria-pressed="false" style="--c:linear-gradient(135deg,#1b1b1e 58%,#e5463f 58%)" aria-label="Variant C"></button>
+    </div>
+    <span class="cw" id="cw" aria-live="polite">Variant A</span>
+  </div>
+</main>
+<div class="hint">Drag to turn<br>Model © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div>
+<div id="boot"><div class="bar"><i id="progress"></i></div></div>
+
+<script>
+// Boot guard (classic script, runs even if the module graph fails): surface errors instead of an endless loader.
+(() => {
+  const errs = [];
+  const show = msg => { const b = document.getElementById('boot'); if (!b || document.body.classList.contains('ready')) return;
+    b.innerHTML = '<p style="max-width:42ch;padding:0 16px;font:14px/1.5 system-ui;text-align:center">The 3D scene could not start.<br><small style="opacity:.7">' + msg.replace(/[<>&]/g, '') + '</small></p>'; };
+  addEventListener('error', e => { errs.push((e.message || (e.target && e.target.src) || 'load error')); show(errs.at(-1)); }, true);
+  addEventListener('unhandledrejection', e => { errs.push(String(e.reason && e.reason.message || e.reason)); show(errs.at(-1)); });
+  setTimeout(() => { if (!document.body.classList.contains('ready')) show(errs.at(-1) || 'Timed out while loading assets.'); }, 20000);
+  window.__bootErrors = errs;
+})();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { loadEnvironment, loadGLTF, fitToGround, makeManager } from './lib/asset-loader.js';
+import { ContactShadows } from './lib/contact-shadows.js';
+import { fbmTexture, radialTexture } from './lib/procedural.js';
+
+// Colorway → backdrop + pedestal palette (product colors stay true: Neutral tone mapping)
+const WAYS = {
+  midnight: { label: 'Variant A', bd: ['#e3e8ee', '#a3afbf'], ped: '#b4bdcb', shadow: '#16263a' },
+  beach:    { label: 'Variant B', bd: ['#f4e9e5', '#cdb3ab'], ped: '#dac6bf', shadow: '#4a2a28' },
+  street:   { label: 'Variant C', bd: ['#e9e7e3', '#a8a39b'], ped: '#c8c3bb', shadow: '#1b1a18' },
+};
+const LOOK = { fov: 26, exposure: 1.0, env: 'assets/studio_small_09_1k.hdr.b64.txt', envIntensity: 1.0,
+  key: { color: 0xfff4e8, intensity: 2.0, pos: [-2.4, 4.0, 1.6] }, rim: { color: 0xe6eeff, intensity: 2.4, pos: [2.2, 1.8, -2.8] } };
+
+const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const QUAL = MOBILE ? { dpr: 1.75, shadow: 1024 } : { dpr: 2, shadow: 2048 };
+const $progress = document.getElementById('progress');
+const manager = makeManager(THREE, v => { $progress.style.width = (25 + v * 70) + '%'; });
+
+const canvas = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, QUAL.dpr));
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = LOOK.exposure;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.setClearColor(0, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(LOOK.fov, 1, 0.05, 50);
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new OutputPass());
+
+// Studio HDRI for reflections only (the backdrop is CSS); rotate it so a softbox streaks along the shoe's side
+await loadEnvironment(THREE, renderer, scene, LOOK.env, { intensity: LOOK.envIntensity, rotationY: 1.9 });
+$progress.style.width = '25%';
+const key = new THREE.DirectionalLight(LOOK.key.color, LOOK.key.intensity);
+key.position.set(...LOOK.key.pos);
+key.castShadow = true;
+key.shadow.mapSize.set(QUAL.shadow, QUAL.shadow);
+Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 1.4, bottom: -1.4, near: 1, far: 9 });
+key.shadow.normalBias = 0.02; key.shadow.radius = 10; key.shadow.intensity = 0.55; // soft and light: the contact shadow carries the grounding
+scene.add(key);
+const rim = new THREE.DirectionalLight(LOOK.rim.color, LOOK.rim.intensity);
+rim.position.set(...LOOK.rim.pos);
+scene.add(rim);
+
+// Pedestal: lathe profile with a real bevel (hard 90° edges read as CG), matte with low-frequency roughness variation
+const PED_H = 0.12, PED_R = 0.74, BEV = 0.03;
+const prof = [[0, 0], [PED_R - 0.02, 0], [PED_R, 0.02], [PED_R, PED_H - BEV]];
+for (let i = 1; i <= 8; i++) { const a = (i / 8) * Math.PI / 2; prof.push([PED_R - BEV + Math.cos(a) * BEV, PED_H - BEV + Math.sin(a) * BEV]); }
+prof.push([0, PED_H]);
+const pedMat = new THREE.MeshStandardMaterial({ color: WAYS.midnight.ped, roughness: 1,
+  roughnessMap: fbmTexture(THREE, { scale: 4, min: 0.62, max: 0.82 }), metalness: 0 });
+const pedestal = new THREE.Mesh(new THREE.LatheGeometry(prof.map(([x, y]) => new THREE.Vector2(x, y)), 128), pedMat);
+pedestal.receiveShadow = true;
+scene.add(pedestal);
+// Ground the pedestal itself: a wide, very soft occlusion blob on the invisible floor below it
+const floorBlob = new THREE.Mesh(new THREE.PlaneGeometry(PED_R * 3.4, PED_R * 3.4).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ map: radialTexture(THREE, [[0, 'rgba(0,0,0,.55)'], [0.28, 'rgba(0,0,0,.38)'], [0.42, 'rgba(0,0,0,.12)'], [1, 'rgba(0,0,0,0)']]),
+    transparent: true, depthWrite: false, toneMapped: false, color: WAYS.midnight.shadow }));
+floorBlob.position.y = -0.001;
+scene.add(floorBlob);
+const contact = new ContactShadows(THREE, renderer, scene, { width: 2, depth: 2, height: 0.5, blur: 3.6, darkness: 1.6, opacity: 0.8, color: WAYS.midnight.shadow });
+contact.group.position.y = PED_H + 0.0015;
+
+// The product
+const gltf = await loadGLTF(THREE, 'assets/MaterialsVariantsShoe.glb.b64.txt', { manager });
+const shoe = gltf.scene;
+fitToGround(THREE, shoe, 1.25);
+shoe.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material.envMapIntensity = 1; } });
+const pivot = new THREE.Group();            // pivot = turn + float; shoe stays centered inside it
+pivot.add(shoe);
+pivot.position.y = PED_H;
+scene.add(pivot);
+const FLOAT = 0.1;                          // floating height above the pedestal
+
+// KHR_materials_variants: swap materials per primitive mapping (see webgl_loader_gltf_variants)
+const variantsExt = gltf.userData.gltfExtensions?.KHR_materials_variants;
+async function applyVariant(name) {
+  const idx = variantsExt.variants.findIndex(v => v.name === name);
+  const jobs = [];
+  shoe.traverse(o => {
+    const ext = o.isMesh && o.userData.gltfExtensions?.KHR_materials_variants;
+    if (!ext) return;
+    const m = ext.mappings.find(m => m.variants.includes(idx));
+    if (m) jobs.push(gltf.parser.getDependency('material', m.material).then(mat => { o.material = mat; gltf.parser.assignFinalMaterial(o); }));
+  });
+  await Promise.all(jobs);
+}
+for (const v of variantsExt.variants) await applyVariant(v.name);   // warm every variant's textures now: no hitch on click
+await applyVariant('midnight');
+
+// Framing: fit the shoe, then push it right (desktop) or up (portrait) with a view offset
+const box = new THREE.Box3().setFromObject(pivot);
+const sphere = box.getBoundingSphere(new THREE.Sphere());
+const target = new THREE.Vector3(0, PED_H + 0.3, 0);
+function resize() {
+  const w = innerWidth, h = innerHeight, portrait = w < 760 || h > w;
+  renderer.setSize(w, h, false);
+  composer.setPixelRatio(renderer.getPixelRatio());
+  composer.setSize(w, h);
+  camera.aspect = w / h;
+  // Fraction of the limiting dimension the hero occupies. Near-square frames (the artifact side panel!) must leave
+  // the copy column free, so the hero shrinks and shifts less than on a wide desktop.
+  const aspect = w / h, mid = THREE.MathUtils.smoothstep(aspect, 1.0, 1.6);   // 0 = square-ish … 1 = wide
+  const fill = portrait ? 0.92 : THREE.MathUtils.lerp(0.5, 0.74, mid);
+  const vFov = THREE.MathUtils.degToRad(LOOK.fov);
+  const fitH = sphere.radius / Math.tan(vFov / 2);
+  const fitW = sphere.radius / (Math.tan(vFov / 2) * camera.aspect);
+  const dist = Math.max(fitH, fitW) / fill;
+  camera.position.set(dist * 0.64, dist * 0.2 + target.y, dist * 0.74);   // low (~11°) = heroic, less pedestal top
+  camera.lookAt(target);
+  if (portrait) camera.setViewOffset(w, h, 0, h * 0.03, w, h);
+  else camera.setViewOffset(w, h, -w * THREE.MathUtils.lerp(0.2, 0.15, mid), h * 0.02, w, h);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+// Interaction: drag turns the shoe (with inertia); pointer hover tilts it a touch
+let yaw = -0.5, yawVel = 0, dragging = false, lastX = 0, lastT = 0, tiltX = 0, tiltY = 0, aimX = 0, aimY = 0;
+canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastT = performance.now(); yawVel = 0; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse') { aimX = (e.clientX / innerWidth - 0.5); aimY = (e.clientY / innerHeight - 0.5); }
+  if (!dragging) return;
+  const now = performance.now(), dx = e.clientX - lastX;
+  yaw += dx * 0.008; yawVel = (dx * 0.008) / Math.max(1, now - lastT) * 1000;
+  lastX = e.clientX; lastT = now;
+});
+const endDrag = () => { dragging = false; if (performance.now() - lastT > 80) yawVel = 0; };
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') yawVel -= 2.5; if (e.key === 'ArrowRight') yawVel += 2.5; });
+
+// Colorway switch: quick spin with the material swap hidden at the fastest point; backdrop crossfades in CSS
+let spin = null, current = 'midnight';
+const root = document.documentElement.style;
+function setWay(name) {
+  if (name === current) return;
+  current = name;
+  const w = WAYS[name];
+  document.querySelectorAll('.swatches button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === name));
+  document.getElementById('cw').textContent = w.label;
+  root.setProperty('--bd-1', w.bd[0]); root.setProperty('--bd-2', w.bd[1]);
+  pedMat.color.set(w.ped);
+  floorBlob.material.color.set(w.shadow);
+  contact.color = w.shadow;
+  spin = { t: 0, from: yaw, swapped: false, name };
+}
+document.querySelectorAll('.swatches button').forEach(b => b.addEventListener('click', () => setWay(b.dataset.v)));
+
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const timer = new THREE.Timer(); timer.connect(document);
+let elapsed = 0;
+function tick(dt) {
+  elapsed += dt;
+  if (spin) {
+    spin.t = Math.min(1, spin.t + dt / (REDUCED ? 0.3 : 1.1));
+    yaw = spin.from + ease(spin.t) * Math.PI * 2;
+    if (!spin.swapped && spin.t > 0.45) { spin.swapped = true; applyVariant(spin.name); }
+    if (spin.t >= 1) { yaw = spin.from; spin = null; }
+  } else if (!dragging) {
+    yaw += yawVel * dt; yawVel *= Math.exp(-dt * 2.8);
+    if (!REDUCED && Math.abs(yawVel) < 0.02) yaw += dt * 0.12;   // idle drift
+  }
+  const k = 1 - Math.exp(-dt * 4);
+  tiltX += (aimY * 0.12 - tiltX) * k; tiltY += (aimX * 0.18 - tiltY) * k;
+  pivot.rotation.set(tiltX, yaw + tiltY, 0);
+  shoe.position.y = FLOAT + (REDUCED ? 0 : Math.sin(elapsed * 1.3) * 0.018);
+  contact.update();
+}
+function frame() { timer.update(); tick(Math.min(timer.getDelta(), 1 / 30)); composer.render(); }
+
+await renderer.compileAsync(scene, camera);
+$progress.style.width = '100%';
+renderer.setAnimationLoop(frame);
+requestAnimationFrame(() => document.body.classList.add('ready'));
+
+window.__app = { renderer, scene, camera, ready: true,
+  sim: (s, h = 1 / 60) => { for (let t = 0; t < s; t += h) tick(h); },
+  state: n => { if (WAYS[n]) { setWay(n); for (let t = 0; t < 1.3; t += 1 / 60) tick(1 / 60); } } };
+</script>

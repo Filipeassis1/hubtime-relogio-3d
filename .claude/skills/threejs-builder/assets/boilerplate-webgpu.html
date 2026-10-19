@@ -1,0 +1,113 @@
+<title>Node Scene</title>
+<style>
+/* Layout: full-bleed canvas; boot line in the center until the first frames are on screen. */
+:root { --bg: #14161b; --ink: #e9e6df; --muted: #8b8f99; --mono: "JetBrains Mono", ui-monospace, monospace; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); overflow: hidden; color-scheme: dark; }
+#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1s ease; touch-action: none; }
+body.ready #gl { opacity: 1; }
+#boot { position: fixed; inset: 0; display: grid; place-items: center; font: 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); pointer-events: none; transition: opacity .5s; }
+body.ready #boot { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { #gl, #boot { transition: none; } }
+</style>
+<canvas id="gl" aria-label="An iridescent sculpture slowly turning in a dark studio"></canvas>
+<div id="boot">loading</div>
+<script>
+// Boot guard: surface failures instead of an endless loader (classic script: runs even if modules fail)
+(() => { const errs = []; const show = m => { const b = document.getElementById('boot'); if (b && !document.body.classList.contains('ready')) b.textContent = 'could not start: ' + m; };
+  addEventListener('error', e => { errs.push(e.message || 'load error'); show(errs.at(-1)); }, true);
+  addEventListener('unhandledrejection', e => { errs.push(String(e.reason?.message || e.reason)); show(errs.at(-1)); });
+  setTimeout(() => { if (!document.body.classList.contains('ready')) show(errs.at(-1) || 'timed out'); }, 20000); })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.js",
+  "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.js",
+  "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.tsl.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<script type="module">
+// "three" AND "three/webgpu" both map to three.webgpu.js — otherwise addons import a second, WebGL-only copy.
+import * as THREE from 'three/webgpu';
+import { Fn, uniform, float, vec3, color, mix, smoothstep, sin, time, positionLocal, normalView, positionView, faceDirection,
+  pass, mx_fractal_noise_float, mx_noise_float } from 'three/tsl';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+
+const LOOK = { fov: 32, exposure: 1.0, envIntensity: 0.45, bloom: { strength: 0.25, radius: 0.5, threshold: 0.85 } };
+const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const canvas = document.getElementById('gl');
+// No WebGPU → transparently uses its WebGL 2 backend. '#webgl' forces that fallback so you can test it:
+// preview.py <folder> --page 'index.html#webgl'  (some node features, e.g. WoodNodeMaterial, are WebGPU-only)
+const renderer = new THREE.WebGPURenderer({ canvas, antialias: false, forceWebGL: location.hash === '#webgl' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2));
+renderer.toneMapping = THREE.AgXToneMapping;
+renderer.toneMappingExposure = LOOK.exposure;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+await renderer.init();                                   // required before compileAsync / first render
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#14161b');
+const camera = new THREE.PerspectiveCamera(LOOK.fov, 1, 0.1, 50);
+camera.position.set(0, 0.7, 7.4);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = LOOK.envIntensity;
+const key = new THREE.DirectionalLight('#fff1e0', 2.5); key.position.set(-3, 4, 2); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.normalBias = 0.02;
+scene.add(key);
+const rim = new THREE.DirectionalLight('#9fb8ff', 3.0); rim.position.set(3, 1.5, -3); scene.add(rim);
+
+// Bump from any procedural height (world units) via screen-space derivatives — TSL's bumpMap() only works on UV-sampled textures
+const bumpNormal = Fn(([h]) => {
+  const dpdx = positionView.dFdx(), dpdy = positionView.dFdy();
+  const r1 = dpdy.cross(normalView), r2 = normalView.cross(dpdx), det = dpdx.dot(r1).mul(faceDirection);
+  return det.abs().mul(normalView).sub(det.sign().mul(h.dFdx().mul(r1).add(h.dFdy().mul(r2)))).normalize();
+});
+
+// Hero: noise-displaced torus knot with an iridescent physical node material (no textures)
+const uWarp = uniform(0.12);
+const mat = new THREE.MeshPhysicalNodeMaterial({ metalness: 0.2, roughness: 0.25, iridescence: 1, iridescenceIOR: 1.6, clearcoat: 0.6 });
+const n = mx_fractal_noise_float(positionLocal.mul(1.6).add(time.mul(REDUCED ? 0 : 0.08)), 4, 2, 0.5);
+mat.positionNode = positionLocal.add(positionLocal.normalize().mul(n.mul(uWarp)));          // displacement in the vertex stage
+mat.colorNode = mix(color('#1d2b4a'), color('#d9c7a0'), smoothstep(-0.3, 0.6, n));
+mat.roughnessNode = float(0.18).add(mx_noise_float(positionLocal.mul(12)).mul(0.08));       // imperfection
+mat.normalNode = bumpNormal(mx_noise_float(positionLocal.mul(40)).mul(0.0004));
+const hero = new THREE.Mesh(new THREE.TorusKnotGeometry(0.85, 0.28, 320, 48), mat);
+hero.castShadow = true;
+scene.add(hero);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64).rotateX(-Math.PI / 2), new THREE.ShadowNodeMaterial({ opacity: 0.4 }));
+floor.position.y = -1.35; floor.receiveShadow = true; scene.add(floor);
+
+// Post: scene pass (MSAA) → bloom on top → RenderPipeline applies tone mapping + sRGB at the end
+const pipeline = new THREE.RenderPipeline(renderer);
+const scenePass = pass(scene, camera, { samples: 4 });
+const sceneColor = scenePass.getTextureNode('output');
+pipeline.outputNode = sceneColor.add(bloom(sceneColor, LOOK.bloom.strength, LOOK.bloom.radius, LOOK.bloom.threshold));
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  camera.fov = innerWidth < innerHeight ? LOOK.fov * 1.4 : LOOK.fov;
+  camera.updateProjectionMatrix();
+  camera.lookAt(0, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+const timer = new THREE.Timer(); timer.connect(document);
+function tick(dt) { if (!REDUCED) hero.rotation.y += dt * 0.25; }
+await renderer.compileAsync(scene, camera);
+let frames = 0;
+renderer.setAnimationLoop(() => {
+  timer.update(); tick(Math.min(timer.getDelta(), 1 / 30));
+  pipeline.render();
+  if (++frames === 3) { document.body.classList.add('ready'); window.__app.ready = true; }   // after the pipeline has compiled
+});
+window.__app = { renderer, scene, camera, ready: false, backend: () => renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl2',
+  sim: (s, h = 1 / 60) => { for (let t = 0; t < s; t += h) tick(h); } };
+</script>

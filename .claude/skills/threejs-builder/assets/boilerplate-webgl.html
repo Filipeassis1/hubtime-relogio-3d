@@ -1,0 +1,186 @@
+<title>Studio Scene</title>
+<style>
+/* Layout: full-bleed canvas over a CSS gradient backdrop; boot screen fades out once shaders are compiled. */
+:root {
+  --bg-1: #f3efe8;            /* backdrop center */
+  --bg-2: #d9d2c6;            /* backdrop edge */
+  --ink: #1f1b16;
+  --muted: #6d655a;
+  --accent: #b5562c;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-ui: "Inter Tight", system-ui, sans-serif;
+}
+html, body { height: 100%; }
+body { background: var(--bg-2); color: var(--ink); overflow: hidden; font-family: var(--font-ui); }
+#stage { position: fixed; inset: 0; background: radial-gradient(120% 90% at 50% 38%, var(--bg-1) 0%, var(--bg-2) 100%); }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .9s ease; touch-action: none; outline: none; }
+body.ready #gl { opacity: 1; }
+#boot { position: fixed; inset: 0; display: grid; place-items: center; transition: opacity .6s ease; pointer-events: none; }
+body.ready #boot { opacity: 0; }
+#boot .bar { width: 160px; height: 2px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+#boot .bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .25s ease; }
+#fail { position: fixed; inset: auto 16px 16px; padding: 12px 14px; background: #fff; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) { #gl, #boot { transition: none; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter+Tight:wght@400;600&display=swap">
+
+<div id="stage"><canvas id="gl" tabindex="0" aria-label="A ceramic vessel on a studio floor. Drag to orbit."></canvas></div>
+<div id="boot" aria-live="polite"><div class="bar"><i id="progress"></i></div></div>
+
+<script>
+// Boot guard (classic script, runs even if the module graph fails): surface errors instead of an endless loader.
+(() => {
+  const errs = [];
+  const show = msg => { const b = document.getElementById('boot'); if (!b || document.body.classList.contains('ready')) return;
+    b.innerHTML = '<p style="max-width:42ch;padding:0 16px;font:14px/1.5 system-ui;text-align:center">The 3D scene could not start.<br><small style="opacity:.7">' + msg.replace(/[<>&]/g, '') + '</small></p>'; };
+  addEventListener('error', e => { errs.push((e.message || (e.target && e.target.src) || 'load error')); show(errs.at(-1)); }, true);
+  addEventListener('unhandledrejection', e => { errs.push(String(e.reason && e.reason.message || e.reason)); show(errs.at(-1)); });
+  setTimeout(() => { if (!document.body.classList.contains('ready')) show(errs.at(-1) || 'Timed out while loading assets.'); }, 20000);
+  window.__bootErrors = errs;
+})();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { loadEnvironment, loadGLTF, fitToGround } from './lib/asset-loader.js';
+import { ContactShadows } from './lib/contact-shadows.js';
+import { fbmTexture, mottleTexture } from './lib/procedural.js';
+
+// ── Look brief → numbers. Every art-direction decision lives here, not scattered in the code. ──
+const LOOK = {
+  env: 'room',               // 'room' | 'pmndrs:studio' | 'assets/x.hdr.jpg' | 'assets/x_1k.hdr.b64.txt'
+  envIntensity: 0.3,         // IBL = fill + reflections. With a key light keep it low (0.2–0.5) so the form reads
+  toneMapping: THREE.AgXToneMapping,   // AgX: filmic, gentle highlights. Neutral: keeps brand colors. ACES: punchy.
+  exposure: 1.0,
+  fov: 30,                   // 25–35 product, 40–50 environments, 60+ only for first-person
+  // Light positions are chosen RELATIVE TO THE CAMERA (here at azimuth ≈ +37°): key ~90° to camera-left and high,
+  // rim behind on the opposite side. A key near the camera direction = flat, frontal, 'default CG' light.
+  key: { color: 0xfff1e0, intensity: 3.4, pos: [-3, 4.2, 1.2] }, // warm key, high and to the side
+  rim: { color: 0xdfe8ff, intensity: 3.0, pos: [2.5, 2.2, -3.5] }, // cool rim from behind: separates the silhouette
+  shadowTint: '#3b2e22',     // shadows take the floor's hue, never pure black
+};
+
+const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const QUAL = MOBILE ? { dpr: 1.5, shadow: 1024, samples: 4 } : { dpr: 2, shadow: 2048, samples: 4 };
+const progress = v => { document.getElementById('progress').style.width = (v * 100).toFixed(0) + '%'; };
+
+const canvas = document.getElementById('gl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance' });
+} catch (e) {
+  document.body.insertAdjacentHTML('beforeend', '<div id="fail">This scene needs WebGL, and this browser could not start it.</div>');
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, QUAL.dpr));
+renderer.toneMapping = LOOK.toneMapping;
+renderer.toneMappingExposure = LOOK.exposure;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;            // r186: PCFSoftShadowMap was removed; PCF + shadow.radius is soft (Vogel disk)
+renderer.setClearColor(0x000000, 0);                 // transparent: the CSS backdrop shows through
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(LOOK.fov, 1, 0.05, 60);
+camera.position.set(2.6, 1.5, 3.4);
+
+// ── Post: MSAA inside the composer (no aliasing after post) → passes → OutputPass (tone map + sRGB, always last)
+const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: QUAL.samples });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new RenderPass(scene, camera));
+// composer.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.35, 0.6, 0.9));  // see references/postfx.md
+composer.addPass(new OutputPass());
+
+// ── Light: IBL does the soft fill and reflections; one shadow-casting key + a rim for edges
+await loadEnvironment(THREE, renderer, scene, LOOK.env, { intensity: LOOK.envIntensity });
+progress(0.4);
+const key = new THREE.DirectionalLight(LOOK.key.color, LOOK.key.intensity);
+key.position.set(...LOOK.key.pos);
+key.castShadow = true;
+key.shadow.mapSize.set(QUAL.shadow, QUAL.shadow);
+Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.5, far: 15 }); // tight frustum = crisp
+key.shadow.normalBias = 0.02;
+key.shadow.radius = 6;
+scene.add(key);
+const rim = new THREE.DirectionalLight(LOOK.rim.color, LOOK.rim.intensity);
+rim.position.set(...LOOK.rim.pos);
+scene.add(rim);
+
+// ── Ground: shadow-only catcher (tinted) + contact shadow for the dark core right under the object
+const catcher = new THREE.Mesh(new THREE.PlaneGeometry(30, 30).rotateX(-Math.PI / 2),
+  new THREE.ShadowMaterial({ color: LOOK.shadowTint, opacity: 0.22 }));
+catcher.receiveShadow = true;
+scene.add(catcher);
+const contact = new ContactShadows(THREE, renderer, scene, { width: 3, depth: 3, height: 0.8, blur: 2.2, darkness: 1.6, opacity: 0.7, color: LOOK.shadowTint });
+contact.group.position.y = 0.002;
+
+// ── Hero. Replace with a real asset: const gltf = await loadGLTF(THREE, 'assets/model.glb.b64.txt'); fitToGround(THREE, gltf.scene, 1.2)
+const profile = [[0, 0], [0.32, 0], [0.36, 0.03], [0.42, 0.25], [0.44, 0.48], [0.36, 0.72], [0.22, 0.86], [0.2, 0.98], [0.24, 1.04], [0.22, 1.06], [0.17, 1.0], [0.18, 0.86]]
+  .map(([x, y]) => new THREE.Vector2(x, y));
+const vessel = new THREE.Mesh(new THREE.LatheGeometry(new THREE.SplineCurve(profile).getPoints(120), 160),
+  new THREE.MeshPhysicalMaterial({
+    map: mottleTexture(THREE, '#c06a42', { scale: 3, amount: 0.07 }),            // color variation: no flat CG plastic
+    roughness: 1, roughnessMap: fbmTexture(THREE, { scale: 5, min: 0.32, max: 0.62 }), // uneven glaze
+    bumpMap: fbmTexture(THREE, { scale: 40, octaves: 3, seed: 11 }), bumpScale: 0.6,   // fine clay grain
+    clearcoat: 0.35, clearcoatRoughness: 0.3, side: THREE.DoubleSide }));
+vessel.castShadow = true;
+scene.add(vessel);
+progress(0.8);
+
+// ── Controls: damped, clamped (never under the floor, never so close the object clips)
+const controls = new OrbitControls(camera, canvas);
+Object.assign(controls, { enableDamping: true, dampingFactor: 0.06, enablePan: false, minDistance: 2.2, maxDistance: 7,
+  minPolarAngle: 0.35, maxPolarAngle: 1.45 });
+// Turn the object, not the camera: the light/view relationship (and so the look) stays the one you designed
+controls.target.set(0, 0.5, 0);
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  composer.setSize(w, h);
+  composer.setPixelRatio(renderer.getPixelRatio());
+  camera.aspect = w / h;
+  camera.fov = w < h ? LOOK.fov * 1.25 : LOOK.fov; // portrait: widen a little instead of cropping the hero
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const timer = new THREE.Timer();
+timer.connect(document);                             // pauses cleanly when the tab is hidden
+let running = true;
+function tick(dt) {
+  controls.update(dt);
+  if (!REDUCED) vessel.rotation.y += dt * 0.15;
+  contact.update();                                  // static scene: could run once instead
+}
+function frame() {
+  timer.update();
+  const dt = Math.min(timer.getDelta(), 1 / 30);     // clamp: tab switches don't explode the sim
+  if (running) tick(dt);
+  composer.render(dt);
+}
+
+await renderer.compileAsync(scene, camera);          // precompile shaders → no first-frame hitch
+progress(1);
+renderer.setAnimationLoop(frame);
+requestAnimationFrame(() => document.body.classList.add('ready'));
+
+// Test hooks for scripts/preview.py: ready flag, fast-forward, named states
+window.__app = {
+  renderer, scene, camera, ready: true,
+  pause: v => { running = !v; },
+  sim: (sec, h = 1 / 60) => { for (let t = 0; t < sec; t += h) tick(h); },
+  state: name => { if (name === 'top') camera.position.set(0, 5, 0.01); },
+};
+</script>
