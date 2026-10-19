@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, type Dispatch, type MutableRefObject } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import type * as THREE from 'three';
-import { PART_BY_ID, PART_IDS, type PartId } from '../data/parts';
-import { isPresent } from '../data/config';
+import type { PartId } from '../data/parts';
+import { partsToRender } from '../state/visibility';
 import { partState, pickPart } from '../state/picking';
 import type { Action, SelectionState } from '../state/selection';
 import { PART_COMPONENTS } from './parts';
@@ -53,7 +53,7 @@ export function Watch({ state, dispatch, hoverId, onHover, groups }: WatchProps)
           if (id) dispatch({ type: 'select', id });
         }}
       >
-        {PART_IDS.filter((id) => isPresent(id, state.config) && (state.view === 'explodido' || !PART_BY_ID[id].interna)).map((id) => {
+        {partsToRender(state.view, state.config, state.activeId).map((id) => {
           const C = PART_COMPONENTS[id];
           return C ? <C key={id} config={state.config} /> : null;
         })}
